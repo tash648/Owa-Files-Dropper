@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+
+  "name": "Owa Files Dropper",
+  "description": "This extension adds attachments to OWA",
+  "version": "1.0",
+
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "http://*/*",
+    "https://*/*"
+  ],
+
+  "content_scripts": [
+    {
+      "js": [ "jquery-1.6.4.js", "jquery.signalR-2.2.2.js", "hubs.js", "underscore.js", "dropper.js" ],
+      "matches": [ "*://*/*" ],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "browser_action": {
+    "default_icon": "img/icon48.png",
+    "default_popup": "popup.html"
+  },
+
+  "icons": {
+    "16": "img/icon16.png",
+    "48": "img/icon48.png",
+    "128": "img/icon128.png"
+  }
+}
