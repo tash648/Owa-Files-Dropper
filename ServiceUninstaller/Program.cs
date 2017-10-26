@@ -9,7 +9,7 @@ namespace ServiceUninstaller
 {
     class Program
     {
-        private static void StartCommand(string command)
+        private static void StartCommandAdmin(string command)
         {
             var process = new Process
             {
@@ -17,26 +17,24 @@ namespace ServiceUninstaller
                 {
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
+                    RedirectStandardInput = true,
                     RedirectStandardError = true,
                     CreateNoWindow = true,
+                    Verb = "runas",
                     FileName = "cmd.exe",
-                    Arguments =  $"/C {command}"
+                    Arguments =  $"elevate cmd.exe /C {command}"
                 }
             };
+
             process.Start();
 
             process.WaitForExit();
-
-            if (process.HasExited)
-            {
-                string output = process.StandardOutput.ReadToEnd();
-            }
         }
 
         static void Main(string[] args)
         {
-            StartCommand("sc stop OwaFilesDropperService");
-            StartCommand("sc delete OwaFilesDropperService");
+            StartCommandAdmin("sc stop OwaFilesDropperService");
+            StartCommandAdmin("sc delete OwaFilesDropperService");
         }
     }
 }

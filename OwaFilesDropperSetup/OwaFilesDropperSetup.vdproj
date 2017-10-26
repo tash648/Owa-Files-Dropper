@@ -3,7 +3,7 @@
 "VSVersion" = "3:800"
 "ProjectType" = "8:{978C614F-708E-4E1A-B201-565925725DBA}"
 "IsWebType" = "8:FALSE"
-"ProjectName" = "8:OwaFilesDropperSetup"
+"ProjectName" = "8:OwaFilesDropperServiceSetup"
 "LanguageId" = "3:1033"
 "CodePage" = "3:1252"
 "UILanguageId" = "3:1033"
@@ -364,12 +364,6 @@
         "Entry"
         {
         "MsmKey" = "8:_FB1FB75F20212F26A766785218A18921"
-        "OwnerKey" = "8:_23AD42D6CB13FDA4874671D01DAACBFE"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_FB1FB75F20212F26A766785218A18921"
         "OwnerKey" = "8:_DA202509D7634982BDE48D77BF2733A8"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -381,8 +375,20 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_FB1FB75F20212F26A766785218A18921"
+        "OwnerKey" = "8:_23AD42D6CB13FDA4874671D01DAACBFE"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_DA202509D7634982BDE48D77BF2733A8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_FB1FB75F20212F26A766785218A18921"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -503,12 +509,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_23AD42D6CB13FDA4874671D01DAACBFE"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_FB1FB75F20212F26A766785218A18921"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1467,13 +1467,13 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DHS Owa Attachment Service"
         "ProductCode" = "8:{645DC9F1-8D19-4933-8B87-D50EDE5AB787}"
-        "PackageCode" = "8:{E8566C02-D11B-401A-9FAF-4812CC434E04}"
+        "PackageCode" = "8:{C2BA03C7-68FB-44BA-BBF9-430AF9B3371F}"
         "UpgradeCode" = "8:{51A7BC06-2FC5-4198-9BC8-1C06F0C14729}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
-        "RemovePreviousVersions" = "11:FALSE"
+        "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:FALSE"
+        "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"
         "Manufacturer" = "8:DHS"
         "ARPHELPTELEPHONE" = "8:"
