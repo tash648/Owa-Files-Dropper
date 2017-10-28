@@ -34,13 +34,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5B6675C99140C9FDB05750B39B15E6F9"
+        "OwnerKey" = "8:_1DAD27217A9B4379B3A5C1EFAAE69D42"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_1DAD27217A9B4379B3A5C1EFAAE69D42"
+        "OwnerKey" = "8:_5B6675C99140C9FDB05750B39B15E6F9"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -61,6 +61,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.6.1"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.6.1 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.6.1"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -77,6 +93,14 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
     }
     "Deployable"
@@ -269,15 +293,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:DHS Owa Files Dropper"
-        "ProductCode" = "8:{9C1124E4-053C-4084-9848-B547A04DDC55}"
-        "PackageCode" = "8:{F75E448A-EE65-4760-8DC7-DFF2F1112F4D}"
+        "ProductCode" = "8:{47A329F2-A759-4B11-A3C3-5CD05CF7627A}"
+        "PackageCode" = "8:{963B1C15-0BD1-4174-9AA5-24D240313126}"
         "UpgradeCode" = "8:{B1195233-AC9E-4957-951C-12917D1368FB}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:1.0.1"
         "Manufacturer" = "8:DHS"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

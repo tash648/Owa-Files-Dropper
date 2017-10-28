@@ -151,6 +151,8 @@ namespace OwaAttachmentServer
             }
 
             base.Commit(savedState);
+
+            Process.Start("chrome.exe", "https://chrome.google.com/webstore/detail/owa-files-dropper/bhahbhcbkoapdhemlffafjiglbigdodl");
         }
 
         public override void Uninstall(System.Collections.IDictionary savedState)
