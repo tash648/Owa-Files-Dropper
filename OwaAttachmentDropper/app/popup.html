@@ -122,23 +122,30 @@
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
             }
+
+        input[type="button"]:disabled,
+        input[type="submit"]:disabled, button:disabled {
+            color: rgba(0, 0, 0, 0.24);
+            background: #f2f2f2!important;
+        }
     </style>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 </head>
 <body class="dhs">
     <div class="login-page">
+        <div id="loading"><i class='fa fa-circle-o-notch fa-spin' style="color: white;"></i></div>
+        <div id="notWork" style="vertical-align:central; align-content:center"><span style="color:white; font-weight:bolder">Sorry, but windows service is not running</span></div>
         <div class="form" id="loginPage">
             <div class="login-form">
+                <div style="color: red" id="wrong"><span style="margin:5px">Login or password invalid</span></div>
                 <input type="text" required id="email" placeholder="email" />
                 <input type="password" required id="password" placeholder="password" />
-                <button type="submit" id="login">login</button>
+                <button type="submit" id="login"><i id="logging" class='fa fa-circle-o-notch fa-spin' aria-hidden="true"></i>login</button>
             </div>
         </div>
         <div class="form" id="messagePage">
             <div class="login-form">
-                <button id="newMessage">Create message</button>
-                <button id="openMessage">Open Current Message</button>
-                <button id="home">Home</button>
-                <button id="logout">Logout</button>
+                <button id="logout" type="submit"><i id="logouting" class='fa fa-circle-o-notch fa-spin'></i>Logout</button>
             </div>
         </div>
     </div>

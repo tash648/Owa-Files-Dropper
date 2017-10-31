@@ -20,20 +20,41 @@ namespace OwaAttachmentServer
             ExchangeServiceProvider.Url = url;
         }
 
-        public static void CreateProvider(string login, string password)
+        
+
+        public static bool CreateProvider(string login, string password)
         {
-            Logout();
+            try
+            {
+                Logout();
 
-            Service = new ExchangeService(ExchangeVersion.Exchange2013);
-            Service.Credentials = new WebCredentials(login, password);
-            Service.Url = new Uri($"{Url}/EWS/Exchange.asmx");
+                var service = new ExchangeService(ExchangeVersion.Exchange2013);
 
-            Service.GetAppManifests();
+                service.Credentials = new WebCredentials(login?.Trim(), password);
 
-            _login = login;
+                service.Url = new Uri($"{Url ?? "https://webmail.dhsforyou.com"}/EWS/Exchange.asmx");
+
+                service.FindFolders(WellKnownFolderName.Root, new SearchFilter.IsGreaterThan(FolderSchema.TotalCount, 0), new FolderView(5));
+
+                Service = service;
+
+                _login = login;
+
+                var exportPath = ConfigurationManager.AppSettings["ExportFolder"];
+
+                _watcher = new ExportDirectoryWatcher(exportPath);
+
+                _watcher.Run();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
-        public static void CreateMessage()
+        public static EmailMessage CreateMessage()
         {
             var emailMessage = new EmailMessage(Service);
 
@@ -42,11 +63,46 @@ namespace OwaAttachmentServer
 
             Message = emailMessage;
 
-            var exportPath = ConfigurationManager.AppSettings["ExportFolder"];
+            return Message;
+        }
 
-            _watcher = new ExportDirectoryWatcher(exportPath, ExchangeServiceProvider.Message.Id.UniqueId);
+        public static bool MessageExist()
+        {
+            if(Message == null)
+            {
+                return false;
+            }
 
-            _watcher.Run();
+            try
+            {
+                EmailMessage.Bind(Service, Message.Id);
+            }
+            catch (Exception)
+            {
+                Message = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool TryBindMessage(ref EmailMessage emailMessage)
+        {
+            if(Message == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                emailMessage = EmailMessage.Bind(Service, Message.Id);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         public static void Logout()

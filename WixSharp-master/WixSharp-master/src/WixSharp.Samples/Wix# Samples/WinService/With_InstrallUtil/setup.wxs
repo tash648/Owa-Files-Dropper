@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="6fe30b47-2577-43ad-9195-1861ca25889c" Name="My Product" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9195-1861ba25889b" Manufacturer="tash648">
+    <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
+    <Media Id="1" Cabinet="My_Product.cab" EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
+        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+          <Directory Id="INSTALLDIR" Name="My Product">
+
+            <Component Id="Component.MyApp.exe" Guid="6fe30b47-2577-43ad-9195-1861f9b9286d">
+              <File Id="MyApp.exe" Source="..\SimpleService\MyApp.exe" />
+            </Component>
+
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <CustomAction Id="Set_Action1_InstallService_Props" Property="Action1_InstallService" Value="INSTALLDIR=[INSTALLDIR];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel]" />
+    <CustomAction Id="Action1_InstallService" BinaryKey="Action1_InstallService_File" DllEntry="InstallService" Return="check" Impersonate="no" Execute="deferred" />
+    <CustomAction Id="Set_Action2_UnInstallService_Props" Property="Action2_UnInstallService" Value="INSTALLDIR=[INSTALLDIR];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel]" />
+    <CustomAction Id="Action2_UnInstallService" BinaryKey="Action1_InstallService_File" DllEntry="UnInstallService" Return="check" Impersonate="no" Execute="deferred" />
+
+    <Binary Id="Action1_InstallService_File" SourceFile="%this%.CA.dll" />
+
+    <UIRef Id="WixUI_Minimal" />
+
+    <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
+      <ComponentRef Id="Component.MyApp.exe" />
+    </Feature>
+
+    <InstallExecuteSequence>
+      <Custom Action="Set_Action1_InstallService_Props" After="InstallInitialize" />
+      <Custom Action="Action1_InstallService" After="InstallFiles"> (NOT Installed) </Custom>
+      <Custom Action="Set_Action2_UnInstallService_Props" After="InstallInitialize" />
+      <Custom Action="Action2_UnInstallService" Before="RemoveFiles"> (REMOVE="ALL") </Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+</Wix>
+

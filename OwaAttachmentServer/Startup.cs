@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNet.SignalR;
-using Microsoft.Owin.Cors;
-using Owin;
+﻿using Owin;
 using System.Web.Http;
 
 namespace OwaAttachmentServer
@@ -17,18 +15,6 @@ namespace OwaAttachmentServer
             );
 
             app.UseWebApi(config);
-
-            app.Map("/signalr", map =>
-            {
-                map.UseCors(CorsOptions.AllowAll);
-                var hubConfiguration = new HubConfiguration
-                {
-                    EnableDetailedErrors = true,
-                    EnableJavaScriptProxies = true
-                };
-
-                map.RunSignalR(hubConfiguration);
-            });
         }
     } 
 }

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="6fe30b47-2577-43ad-9195-1861ca25889c" Name="DHS Owa Files Dropper" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9195-1861ba25889b" Manufacturer="DHS">
+    <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" InstallPrivileges="elevated" />
+    <Media Id="1" Cabinet="DHS_Owa_Files_Dropper.cab" EmbedCab="yes" />
+    <Property Id="ALLUSERS" Value="1" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="TARGETBACKUPDIRECTORY">
+        
+      </Directory>
+      <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
+        <Directory Id="ProgramFilesFolder.DHS" Name="DHS">
+          <Directory Id="INSTALLDIR" Name="Owa Files Dropper">
+            <Component Id="Component.OwaAttachmentServer.exe" Guid="6fe30b47-2577-43ad-9195-18619763f42b">
+              <File Id="OwaAttachmentServer.exe" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe" KeyPath='yes'/>
+              <File Id="Microsoft.Exchange.WebServices.Auth.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.Auth.dll" />
+              <File Id="Microsoft.Exchange.WebServices.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.dll" />              
+              <File Id="Microsoft.IdentityModel.Extensions.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.IdentityModel.Extensions.dll" />
+              <File Id="Microsoft.Owin.Cors.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Cors.dll" />
+              <File Id="Microsoft.Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.dll" />
+              <File Id="Microsoft.Owin.FileSystems.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.FileSystems.dll" />
+              <File Id="Microsoft.Owin.Host.HttpListener.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Host.HttpListener.dll" />
+              <File Id="Microsoft.Owin.Host.SystemWeb.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Host.SystemWeb.dll" />
+              <File Id="Microsoft.Owin.Hosting.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Hosting.dll" />
+              <File Id="Microsoft.Owin.Security.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Security.dll" />
+              <File Id="Newtonsoft.Json.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Newtonsoft.Json.dll" />
+              <File Id="OwaAttachmentServer.exe.config" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe.config">
+                <Permission User="Users" GenericAll="yes"
+                      ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read 
+                      ="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
+                      SpecificRightsAll ="yes" />
+              </File>
+              <File Id="Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Owin.dll" />
+              <File Id="System.Net.Http.Formatting.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Net.Http.Formatting.dll" />
+              <File Id="System.Web.Cors.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Cors.dll" />
+              <File Id="System.Web.Http.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Http.dll" />
+              <File Id="System.Web.Http.Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Http.Owin.dll" />
+              <File Id="localhost.pfx" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\localhost.pfx" />
+              <ServiceInstall Id="OwaAttachmentServerInstaller"
+                            Name="OwaAttachmentServer"
+                            DisplayName="OwaAttachmentServer"
+                            Type="ownProcess"
+                            Start="auto"
+                            ErrorControl="normal"
+                            Description="OwaAttachmentServer"
+                            Account="NT AUTHORITY\SYSTEM" />
+              <ServiceControl Id="StartWixServiceInstaller"
+                              Name="OwaAttachmentServer" Start="install" Wait="no" />
+              <ServiceControl Id="StopWixServiceInstaller" Name="OwaAttachmentServer"
+                              Stop="both" Wait="yes" Remove="uninstall" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <CustomAction Id="Action1_InstallService" BinaryKey="Action1_InstallService_File"  DllEntry="InstallService" Return="check" Impersonate="no" Execute="immediate" />
+    <CustomAction Id="Select_Folder" BinaryKey="Action1_InstallService_File"  DllEntry="SelectExportFolder" Return="check" Impersonate="no" Execute="immediate" />
+
+    <Binary Id="Action1_InstallService_File" SourceFile="OwaFilesDropperSetupCA.CA.dll" />
+
+    <Property Id="WIXUI_INSTALLDIR">INSTALLDIR</Property>
+    <UI>          
+      <UIRef Id="WixUI_InstallDir" />
+      <Publish Dialog="WelcomeDlg"
+            Control="Next"
+            Event="NewDialog"
+            Value="InstallDirDlg"
+            Order="2">1</Publish>
+      <Publish Dialog="InstallDirDlg"
+            Control="Back"
+            Event="NewDialog"
+            Value="WelcomeDlg"
+            Order="2">1</Publish>
+    </UI>
+    
+    <Property Id="BACKUPDIRECTORY" Value="TARGETBACKUPDIRECTORY" />
+    
+    <InstallExecuteSequence>
+      <Custom Action="Action1_InstallService" After="InstallFinalize" > (NOT Installed) </Custom>
+      <Custom Action="Select_Folder" After="InstallFiles" > (NOT Installed) </Custom>
+    </InstallExecuteSequence>
+    
+    <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
+      <ComponentRef Id="Component.OwaAttachmentServer.exe" />
+    </Feature>
+
+  </Product>
+</Wix>
+

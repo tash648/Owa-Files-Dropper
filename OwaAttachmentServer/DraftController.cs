@@ -25,9 +25,7 @@ namespace OwaAttachmentServer
         [HttpPost]
         public IHttpActionResult Login(LoginModel model)
         {
-            ExchangeServiceProvider.CreateProvider(model.email, model.password);
-
-            return Ok();
+            return Ok(ExchangeServiceProvider.CreateProvider(model.email, model.password));
         }
 
         [Route("create")]

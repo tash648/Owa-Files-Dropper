@@ -10,18 +10,11 @@ namespace OwaAttachmentServer
         private bool isDisposed;
         private FileSystemWatcher watcher;
 
-        public string DirectoryPath { get; private set; }
-
-        public string ParentId { get; set; }
-
-        public ExportDirectoryWatcher(string directoryPath, string parentId)
+        public ExportDirectoryWatcher(string directoryPath)
         {
-            DirectoryPath = directoryPath;
-            ParentId = parentId;
-
             watcher = new FileSystemWatcher();
 
-            watcher.Path = ConfigurationManager.AppSettings["ExportFolder"];
+            watcher.Path = directoryPath;
 
             watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
                                    | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -39,19 +32,22 @@ namespace OwaAttachmentServer
         {
             try
             {
-                var message = EmailMessage.Bind(ExchangeServiceProvider.Service, ParentId);
+                EmailMessage message = null;
+
+                if (!ExchangeServiceProvider.TryBindMessage(ref message))
+                {
+                    message = ExchangeServiceProvider.CreateMessage();
+                }
 
                 message.Attachments.AddFileAttachment(e.FullPath);
 
                 message.Update(ConflictResolutionMode.AutoResolve);
 
                 ExchangeServiceProvider.Message = message;
-
-                FileSystemWatcherHub.AttachFile();
     
                 File.Delete(e.FullPath);
             }
-            catch (Exception ex)
+            catch (Exception)
             { }
         }
 
@@ -59,7 +55,7 @@ namespace OwaAttachmentServer
         {
             if (!isDisposed)
             {
-                watcher?.Dispose();
+                watcher?.Dispose();                
                 isDisposed = true;
             }
         }

@@ -5,108 +5,89 @@ setHost = function (url) {
 }
 
 $(document).ready(function () {
+
+    $('#wrong').hide();    
+    $('#notWork').hide();
+    $('#logouting').hide();
+    $('#logging').hide();
     $('#loginPage').hide();
     $('#messagePage').hide();
 
-    $.get('https://localhost:8080/api/draft/logined', (e) => {
-        if (e === true) {
-            $('#messagePage').show();
-
-            $.get('https://localhost:8080/api/draft/message', a => {
-                if (a === true) {
-                    $('#openMessage').show();
-                }
-                else {
-                    $('#openMessage').hide();
-                }
-            })
-        }
-        else {
-            $('#loginPage').show();
+    $('#loading').show();
+    $.ajax({
+        url: 'https://localhost:8080/api/draft/logined',
+        type: 'GET',
+        success: function (e) {
+            if (e === false) {
+                $('#wrong').hide();
+                $('#logging').hide();
+                $('#loginPage').show();
+                $('#messagePage').hide();
+            }
+            else {
+                $('#messagePage').show();
+            }
+        },
+        error: function () {
+            $('#notWork').show();
+        },
+        complete: function () {
+            $('#loading').hide();
         }
     });
 
     $('#login').click(e => {
+
+        $('#wrong').hide();  
+        $('#logging').show();
+
+        $("#login").attr('disabled', true);
+
         let email = $('#email').val();
         let password = $('#password').val();
         let host = window.location.host;
 
-        $.post('https://localhost:8080/api/draft/login', {
-            email: email,
-            password: password,
-            url: host
-        }, (e) => {
-            $('#loginPage').hide();
-            $('#messagePage').show();
-
-            $.get('https://localhost:8080/api/draft/message', a => {
-                if (a === true) {
-                    $('#openMessage').show();
+        $.ajax({
+            url: 'https://localhost:8080/api/draft/login',
+            type: 'POST',
+            data: {
+                email: email,
+                password: password
+            },
+            success: function (e) {
+                if (e === true) {
+                    $('#loginPage').hide();
+                    $('#messagePage').show();
                 }
                 else {
-                    $('#openMessage').hide();
+                    $('#wrong').show();
                 }
-            });
-        });
-    });
-
-    $('#newMessage').click(e => {
-        $.get('https://localhost:8080/api/draft/create', a => {
-            if (a === 'OK') {
-                $('#openMessage').show();
-                $.get('https://localhost:8080/api/draft/open', url => {
-                    if (url !== '') {
-                        chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-                            var activeTab = tabs[0];
-                            chrome.tabs.sendMessage(activeTab.id, { message: "open", url: url });
-                        });
-                    }
-                });
-            }
-            else {
-                $('#openMessage').hide();
+            },
+            complete: function () {
+                $('#logging').hide();
+                $("#login").attr('disabled', false);
             }
         });
-    });
-
-    $('#openMessage').click(e => {
-        $.get('https://localhost:8080/api/draft/open', url => {
-            if (url !== '') {
-                chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-                    var activeTab = tabs[0];
-                    chrome.tabs.sendMessage(activeTab.id, { message: "open", url: url });
-                });
-            }
-            else {
-                $('#openMessage').hide();
-            }
-        });
-    });    
-
-    $('#home').click(e => {
-        $.get('https://localhost:8080/api/draft/home', url => {
-            if (url !== '') {
-                chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-                    var activeTab = tabs[0];
-                    chrome.tabs.sendMessage(activeTab.id, { message: "open", url: url });
-                });
-            }
-        });
-    });   
+    });  
 
     $('#logout').click(e => {
-        $.get('https://localhost:8080/api/draft/logout', url => {
-            $('#loginPage').show();
-            $('#messagePage').hide();
-
-            $.get('https://localhost:8080/api/draft/home', url => {
-                if (url !== '') {
-                    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-                        var activeTab = tabs[0];
-                        chrome.tabs.sendMessage(activeTab.id, { message: "open", url: url });
-                    });
+        $('#logouting').show();
+        $("#logout").attr('disabled', true);
+        $.ajax({
+            url: 'https://localhost:8080/api/draft/logout',
+            type: 'GET',
+            success: function (e) {
+                if (e === '') {
+                    $('#wrong').hide();
+                    $('#logging').hide();
+                    $('#loginPage').show();
+                    $('#messagePage').hide();
                 }
-            });
+            },
+            complete: function () {
+                $('#logouting').hide();
+                $("#logout").attr('disabled', false);
+            }
         });
     });   
 });
