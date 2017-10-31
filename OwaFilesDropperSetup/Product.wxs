@@ -26,9 +26,8 @@
               <File Id="Microsoft.Owin.Security.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Security.dll" />
               <File Id="Newtonsoft.Json.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Newtonsoft.Json.dll" />
               <File Id="OwaAttachmentServer.exe.config" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe.config">
-                <Permission User="Users" GenericAll="yes"
-                      ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read 
-                      ="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
+                <Permission User="Everyone" GenericAll="yes"
+                      ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
                       SpecificRightsAll ="yes" />
               </File>
               <File Id="Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Owin.dll" />
@@ -44,7 +43,7 @@
                             Start="auto"
                             ErrorControl="normal"
                             Description="OwaAttachmentServer"
-                            Account="NT AUTHORITY\SYSTEM" />
+                            Account="LocalSystem" />
               <ServiceControl Id="StartWixServiceInstaller"
                               Name="OwaAttachmentServer" Start="install" Wait="no" />
               <ServiceControl Id="StopWixServiceInstaller" Name="OwaAttachmentServer"

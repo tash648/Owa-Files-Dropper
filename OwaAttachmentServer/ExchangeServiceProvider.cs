@@ -18,9 +18,7 @@ namespace OwaAttachmentServer
         public static void SetUrl(string url)
         {
             ExchangeServiceProvider.Url = url;
-        }
-
-        
+        }        
 
         public static bool CreateProvider(string login, string password)
         {
@@ -35,16 +33,17 @@ namespace OwaAttachmentServer
                 service.Url = new Uri($"{Url ?? "https://webmail.dhsforyou.com"}/EWS/Exchange.asmx");
 
                 service.FindFolders(WellKnownFolderName.Root, new SearchFilter.IsGreaterThan(FolderSchema.TotalCount, 0), new FolderView(5));
-
-                Service = service;
-
+                
                 _login = login;
 
-                var exportPath = ConfigurationManager.AppSettings["ExportFolder"];
+                var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
+                var exportPath = appSettings.Settings["ExportFolder"].Value;
 
                 _watcher = new ExportDirectoryWatcher(exportPath);
 
                 _watcher.Run();
+
+                Service = service;
 
                 return true;
             }
