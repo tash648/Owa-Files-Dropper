@@ -1,1 +1,4 @@
-﻿$.get('https://localhost:8080/api/draft/host?url=' + window.location.origin);
+﻿chrome.runtime.sendMessage({
+    from: 'content',
+    url: window.location.origin
+});

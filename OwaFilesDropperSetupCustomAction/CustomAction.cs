@@ -1,4 +1,5 @@
 using Microsoft.Deployment.WindowsInstaller;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -10,7 +11,10 @@ namespace OwaFilesDropperSetupCA
 {
     public class CustomActions
     {
-        private static void StartCommand(string command)
+        private const string keyInstallDir = "HKEY_CURRENT_USER\\DHS\\OwaFilesDropperInstaller\\InstallDir";
+        private const string keyExportFolder = "HKEY_CURRENT_USER\\DHS\\OwaFilesDropperInstaller\\ExportFolder";
+
+        private static void StartCommand(string command, Session session)
         {
             var process = new Process
             {
@@ -20,8 +24,9 @@ namespace OwaFilesDropperSetupCA
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     CreateNoWindow = true,
+                    Verb = "runas",
                     FileName = "cmd.exe",
-                    Arguments =  $"/C {command}"
+                    Arguments =  $"elevate cmd.exe /C {command}"
                 }
             };
             process.Start();
@@ -30,7 +35,9 @@ namespace OwaFilesDropperSetupCA
 
             if (process.HasExited)
             {
-                string output = process.StandardOutput.ReadToEnd();
+                var output = process.StandardOutput.ReadToEnd();
+
+                session.Message(InstallMessage.Info, new Record() { FormatString = output });
             }
         }
 
@@ -80,30 +87,20 @@ namespace OwaFilesDropperSetupCA
         {
             try
             {
+                var record = new Record();
+                
                 var targetPath = session["INSTALLDIR"];
-
-                var directoryInfo = new DirectoryInfo(targetPath);
-                var certPath = Path.Combine(targetPath, "localhost.pfx");
-
-                StartCommandAdmin(string.Format("certutil -importpfx \"{0}\"", certPath));
-                StartCommand("netsh http delete sslcert ipport=0.0.0.0:8080");
-                StartCommand("netsh http delete urlacl url=https://*:8080/");
-                StartCommand("netsh http add urlacl url=https://*:8080/ user=EVERYONE");
-                StartCommand("netsh http add sslcert ipport=0.0.0.0:8080 appid={a1859f53-c288-43a1-ad49-40ff8ed84764} certhash=82183dbc3daaaef7a3b9b0d0d7040dad500c640f");
-
-                var path = session["EXPORTFOLDER"];
+                var exportPath = session["EXPORTFOLDER"];
 
                 var configPath = Path.Combine(targetPath, "OwaAttachmentServer.exe.config");
-
-                var record = new Record();
-
+                
                 record.FormatString = string.Format("Files exist = " + File.Exists(configPath));
 
                 session.Message(InstallMessage.Info, record);
 
                 if (File.Exists(configPath))
                 {
-                    var configString = string.Join(" ", File.ReadAllLines(configPath)).Replace("~exportFolder", path);
+                    var configString = string.Join(" ", File.ReadAllLines(configPath)).Replace("~exportFolder", exportPath);
 
                     File.WriteAllText(configPath, string.Empty);
                     File.WriteAllText(configPath, configString);
@@ -122,6 +119,15 @@ namespace OwaFilesDropperSetupCA
 
                 return ActionResult.Failure;
             }
+        }
+
+        [CustomAction]
+        public static ActionResult InstallNetshUrlAcl(Session session)
+        {
+            StartCommand("netsh http delete urlacl url=http://*:4433/", session);
+            StartCommand("netsh http add urlacl url=http://*:4433/ user=EVERYONE", session);
+
+            return ActionResult.Success;
         }
 
         [CustomAction]

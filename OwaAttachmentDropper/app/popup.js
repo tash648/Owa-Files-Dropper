@@ -15,7 +15,7 @@ $(document).ready(function () {
 
     $('#loading').show();
     $.ajax({
-        url: 'https://localhost:8080/api/draft/logined',
+        url: 'http://localhost:4433/api/draft/logined',
         type: 'GET',
         success: function (e) {
             if (e === false) {
@@ -48,7 +48,7 @@ $(document).ready(function () {
         let host = window.location.host;
 
         $.ajax({
-            url: 'https://localhost:8080/api/draft/login',
+            url: 'http://localhost:4433/api/draft/login',
             type: 'POST',
             data: {
                 email: email,
@@ -74,7 +74,7 @@ $(document).ready(function () {
         $('#logouting').show();
         $("#logout").attr('disabled', true);
         $.ajax({
-            url: 'https://localhost:8080/api/draft/logout',
+            url: 'http://localhost:4433/api/draft/logout',
             type: 'GET',
             success: function (e) {
                 if (e === '') {

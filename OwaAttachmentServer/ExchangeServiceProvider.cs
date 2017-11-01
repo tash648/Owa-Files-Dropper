@@ -33,6 +33,9 @@ namespace OwaAttachmentServer
                 service.Url = new Uri($"{Url ?? "https://webmail.dhsforyou.com"}/EWS/Exchange.asmx");
 
                 service.FindFolders(WellKnownFolderName.Root, new SearchFilter.IsGreaterThan(FolderSchema.TotalCount, 0), new FolderView(5));
+
+                service.TraceEnabled = false;
+                service.TraceFlags = TraceFlags.None;
                 
                 _login = login;
 
@@ -63,26 +66,6 @@ namespace OwaAttachmentServer
             Message = emailMessage;
 
             return Message;
-        }
-
-        public static bool MessageExist()
-        {
-            if(Message == null)
-            {
-                return false;
-            }
-
-            try
-            {
-                EmailMessage.Bind(Service, Message.Id);
-            }
-            catch (Exception)
-            {
-                Message = null;
-                return false;
-            }
-
-            return true;
         }
 
         public static bool TryBindMessage(ref EmailMessage emailMessage)

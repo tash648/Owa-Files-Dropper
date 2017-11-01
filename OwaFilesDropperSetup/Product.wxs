@@ -4,7 +4,7 @@
   <Product Id="6fe30b47-2577-43ad-9195-1861ca25889c" Name="DHS Owa Files Dropper" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9195-1861ba25889b" Manufacturer="DHS">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" InstallPrivileges="elevated" />
     <Media Id="1" Cabinet="DHS_Owa_Files_Dropper.cab" EmbedCab="yes" />
-    <Property Id="ALLUSERS" Value="1" />
+    <Property Id="ALLUSERS" Value="2" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="TARGETBACKUPDIRECTORY">
         
@@ -35,18 +35,17 @@
               <File Id="System.Web.Cors.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Cors.dll" />
               <File Id="System.Web.Http.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Http.dll" />
               <File Id="System.Web.Http.Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Http.Owin.dll" />
-              <File Id="localhost.pfx" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\localhost.pfx" />
               <ServiceInstall Id="OwaAttachmentServerInstaller"
-                            Name="OwaAttachmentServer"
-                            DisplayName="OwaAttachmentServer"
+                            Name="OwaFilesDropperService"
+                            DisplayName="OwaFilesDropperService"
                             Type="ownProcess"
                             Start="auto"
                             ErrorControl="normal"
-                            Description="OwaAttachmentServer"
+                            Description="This extension adds attachments to OWA"
                             Account="LocalSystem" />
               <ServiceControl Id="StartWixServiceInstaller"
-                              Name="OwaAttachmentServer" Start="install" Wait="no" />
-              <ServiceControl Id="StopWixServiceInstaller" Name="OwaAttachmentServer"
+                              Name="OwaFilesDropperService" Start="install" Wait="no" />
+              <ServiceControl Id="StopWixServiceInstaller" Name="OwaFilesDropperService"
                               Stop="both" Wait="yes" Remove="uninstall" />
             </Component>
           </Directory>
@@ -54,8 +53,9 @@
       </Directory>
     </Directory>
 
-    <CustomAction Id="Action1_InstallService" BinaryKey="Action1_InstallService_File"  DllEntry="InstallService" Return="check" Impersonate="no" Execute="immediate" />
+    <CustomAction Id="Action1_InstallService" BinaryKey="Action1_InstallService_File" DllEntry="InstallService" Return="check" Impersonate="no" Execute="immediate" />
     <CustomAction Id="Select_Folder" BinaryKey="Action1_InstallService_File"  DllEntry="SelectExportFolder" Return="check" Impersonate="no" Execute="immediate" />
+    <CustomAction Id="SetNetsh" BinaryKey="Action1_InstallService_File"  DllEntry="InstallNetshUrlAcl" Return="check" Impersonate="no" Execute="deferred" />
 
     <Binary Id="Action1_InstallService_File" SourceFile="OwaFilesDropperSetupCA.CA.dll" />
 
@@ -79,6 +79,7 @@
     <InstallExecuteSequence>
       <Custom Action="Action1_InstallService" After="InstallFinalize" > (NOT Installed) </Custom>
       <Custom Action="Select_Folder" After="InstallFiles" > (NOT Installed) </Custom>
+      <Custom Action="SetNetsh" After="InstallInitialize" > (NOT Installed) </Custom>
     </InstallExecuteSequence>
     
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">

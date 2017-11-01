@@ -1,9 +1,6 @@
-﻿using System;
+﻿using Microsoft.Owin.Hosting;
+using System;
 using System.ServiceProcess;
-using Microsoft.Owin.Hosting;
-using System.Configuration;
-using System.Diagnostics;
-using System.ComponentModel;
 
 namespace OwaAttachmentServer
 {
@@ -14,32 +11,15 @@ namespace OwaAttachmentServer
         public OwaFilesListener()
         {
             InitializeComponent();
-
-            //Setup logging
-            this.AutoLog = false;
-
-            ((ISupportInitialize)this.EventLog).BeginInit();
-
-            if (!EventLog.SourceExists(this.ServiceName))
-            {
-                EventLog.CreateEventSource(this.ServiceName, "Application");
-            }
-
-            ((ISupportInitialize)this.EventLog).EndInit();
-
-            this.EventLog.Source = this.ServiceName;
-            this.EventLog.Log = "Application";
         }
 
         public void Start()
         {
-            var baseAddress = "https://*:8080";            
+            var baseAddress = "http://*:4433";            
 
             var options = new StartOptions(baseAddress);
 
             service = WebApp.Start<Startup>(options);
-
-            this.EventLog.WriteEntry("ExportFolder " + ConfigurationManager.AppSettings["ExportFolder"]);
         }
 
         protected override void OnStart(string[] args)
