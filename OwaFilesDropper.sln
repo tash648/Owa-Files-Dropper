@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwaFilesDropperServer", "Ow
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwaAttachmentDropper", "OwaAttachmentDropper\OwaAttachmentDropper.csproj", "{9D141603-1A9D-4EEC-82D8-C473EA436839}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwaFilesDropperInstaller", "OwaFilesDropperInstaller\OwaFilesDropperInstaller.csproj", "{34449331-FD21-4F86-BCE1-30C226F22ACB}"
-EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "OwaFilesDropperSetup", "OwaFilesDropperSetup\OwaFilesDropperSetup.wixproj", "{1AD7CC58-F0F4-4B23-B8D6-2E6184D779F5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwaFilesDropperSetupCA", "OwaFilesDropperSetupCustomAction\OwaFilesDropperSetupCA.csproj", "{C15B5273-3BA0-4BFD-872C-B6915AB6FF50}"
@@ -37,14 +35,6 @@ Global
 		{9D141603-1A9D-4EEC-82D8-C473EA436839}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9D141603-1A9D-4EEC-82D8-C473EA436839}.Release|x86.ActiveCfg = Release|Any CPU
 		{9D141603-1A9D-4EEC-82D8-C473EA436839}.Release|x86.Build.0 = Release|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Debug|x86.Build.0 = Debug|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Release|x86.ActiveCfg = Release|Any CPU
-		{34449331-FD21-4F86-BCE1-30C226F22ACB}.Release|x86.Build.0 = Release|Any CPU
 		{1AD7CC58-F0F4-4B23-B8D6-2E6184D779F5}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{1AD7CC58-F0F4-4B23-B8D6-2E6184D779F5}.Debug|x86.ActiveCfg = Debug|x86
 		{1AD7CC58-F0F4-4B23-B8D6-2E6184D779F5}.Debug|x86.Build.0 = Debug|x86
