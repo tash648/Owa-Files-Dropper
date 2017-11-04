@@ -92,6 +92,8 @@ namespace OwaFilesDropperSetupCA
                 var targetPath = session["INSTALLDIR"];
                 var exportPath = session["EXPORTFOLDER"];
 
+                Registry.SetValue(keyInstallDir, "keyInstallDir", targetPath);
+
                 var configPath = Path.Combine(targetPath, "OwaAttachmentServer.exe.config");
                 
                 record.FormatString = string.Format("Files exist = " + File.Exists(configPath));
@@ -100,7 +102,7 @@ namespace OwaFilesDropperSetupCA
 
                 if (File.Exists(configPath))
                 {
-                    var configString = string.Join(" ", File.ReadAllLines(configPath)).Replace("~exportFolder", exportPath);
+                    var configString = string.Join(" ", File.ReadAllLines(configPath)).Replace("~exportFolder", exportPath).Replace("~installFolder", targetPath);
 
                     File.WriteAllText(configPath, string.Empty);
                     File.WriteAllText(configPath, configString);

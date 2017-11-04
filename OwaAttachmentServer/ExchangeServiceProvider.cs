@@ -1,6 +1,10 @@
 ﻿using Microsoft.Exchange.WebServices.Data;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Configuration;
+using System.IO;
+using static OwaAttachmentServer.DraftController;
 
 namespace OwaAttachmentServer
 {
@@ -9,16 +13,96 @@ namespace OwaAttachmentServer
         private static string _login;
         private static ExportDirectoryWatcher _watcher;
 
+        private static string programDataFileName = "Permissions.dll";
+
+        private static string dataFullPath;
+
+        public class DataModel
+        {
+            public string Login { get; set; }
+
+            public string Password { get; set; }
+
+            public string Host { get; set; }
+        }
+
+        private static void CleanLoginModel(string fileName)
+        {
+            try
+            {
+                using (var dataFile = File.Open(fileName, FileMode.Truncate))
+                { }
+            }
+            catch (Exception)
+            { }
+        }
+
+        private static bool SaveLoginModel(string fileName, DataModel data)
+        {
+            try
+            {
+                using (var dataFile = File.Open(fileName, FileMode.Truncate))
+                using (var streamWriter = new StreamWriter(dataFile))
+                {
+                    var json = JsonConvert.SerializeObject(data);
+
+                    streamWriter.Write(json);
+
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }            
+        }
+
+        public static DataModel GetLoginModel(string fileName)
+        {
+            try
+            {
+                using (var dataFile = File.Open(fileName, FileMode.OpenOrCreate))
+                using (var streamReader = new StreamReader(dataFile))
+                {
+                    var json = streamReader.ReadToEnd();
+
+                    var dataModel = JsonConvert.DeserializeObject<DataModel>(json);
+
+                    return dataModel;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public static string Url { get; private set; }
 
         public static ExchangeService Service { get; private set; }
 
         public static EmailMessage Message { get; set; }
 
+        static ExchangeServiceProvider()
+        {
+            var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
+            var installFolder = appSettings.Settings["InstallFolder"].Value;
+
+            dataFullPath = Path.Combine(installFolder, programDataFileName);
+
+            var loginModel = GetLoginModel(dataFullPath);
+
+            if (loginModel != null)
+            {
+                SetUrl(loginModel.Host);
+                CreateProvider(loginModel.Login, loginModel.Password);
+            }
+        }
+
         public static void SetUrl(string url)
         {
-            ExchangeServiceProvider.Url = url;
-        }        
+            Url = url;
+        }   
 
         public static bool CreateProvider(string login, string password)
         {
@@ -47,6 +131,13 @@ namespace OwaAttachmentServer
                 _watcher.Run();
 
                 Service = service;
+
+                SaveLoginModel(dataFullPath, new DataModel()
+                {
+                    Host = Url,
+                    Login = login?.Trim(),
+                    Password = password
+                });
 
                 return true;
             }
@@ -89,6 +180,8 @@ namespace OwaAttachmentServer
 
         public static void Logout()
         {
+            CleanLoginModel(dataFullPath);
+
             _watcher?.Dispose();
             _watcher = null;
 
