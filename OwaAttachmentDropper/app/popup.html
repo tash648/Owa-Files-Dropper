@@ -38,6 +38,10 @@
                 font-size: 14px;
             }
 
+            .form input:focus {
+                outline: -webkit-focus-ring-color auto 5px;
+            }
+
             .form button {
                 font-family: "Roboto", sans-serif;
                 text-transform: uppercase;
@@ -54,8 +58,12 @@
                 cursor: pointer;
             }
 
-                .form button:hover, .form button:active, .form button:focus {
-                    background: #3d7a64;
+                .form button:hover, .form button:active {
+                    background: #F8B141;
+                }
+
+                .form button:focus {
+                    outline: -webkit-focus-ring-color auto 5px;
                 }
 
             .form .message {
@@ -138,14 +146,14 @@
         <div class="form" id="loginPage">
             <div class="login-form">
                 <div style="color: red" id="wrong"><span style="margin:5px">Login or password invalid</span></div>
-                <input type="text" required id="email" placeholder="email" />
-                <input type="password" required id="password" placeholder="password" />
-                <button type="submit" id="login"><i id="logging" class='fa fa-circle-o-notch fa-spin' aria-hidden="true"></i>login</button>
+                <input type="text" required id="email" placeholder="Email Address" />
+                <input type="password" required id="password" placeholder="Password" />
+                <button type="submit" id="login"><i id="logging" class='fa fa-circle-o-notch fa-spin' aria-hidden="true"></i>Sign In</button>
             </div>
         </div>
         <div class="form" id="messagePage">
             <div class="login-form">
-                <button id="logout" type="submit"><i id="logouting" class='fa fa-circle-o-notch fa-spin'></i>Logout</button>
+                <button id="logout" type="submit"><i id="logouting" class='fa fa-circle-o-notch fa-spin'></i>Sign out</button>
             </div>
         </div>
     </div>

@@ -3,7 +3,7 @@
 
   "name": "Owa Files Dropper",
   "description": "This extension adds attachments to OWA",
-  "version": "1.3",
+  "version": "1.4",
 
   "permissions": [
     "tabs",
