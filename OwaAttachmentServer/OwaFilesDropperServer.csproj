@@ -128,9 +128,9 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="ClassDiagram1.cd" />
-    <None Include="data.dat">
+    <Content Include="Permissions.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include="localhost.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

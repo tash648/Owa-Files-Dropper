@@ -14,14 +14,6 @@ namespace OwaAttachmentServer
             public string password { get; set; }
         }
 
-        [HttpGet]
-        public IHttpActionResult Host(string url)
-        {
-            ExchangeServiceProvider.SetUrl(url);
-
-            return Ok();
-        }
-
         [Route("login")]
         [HttpPost]
         public IHttpActionResult Login(LoginModel model)

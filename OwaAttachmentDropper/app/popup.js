@@ -58,6 +58,8 @@ $(document).ready(function () {
                 if (e === true) {
                     $('#loginPage').hide();
                     $('#messagePage').show();
+
+                    window.close();
                 }
                 else {
                     $('#wrong').show();

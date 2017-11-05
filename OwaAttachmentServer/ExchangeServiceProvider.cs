@@ -77,7 +77,7 @@ namespace OwaAttachmentServer
             }
         }
 
-        public static string Url { get; private set; }
+        public static string Url { get; private set; } = "https://webmail.dhsforyou.com";
 
         public static ExchangeService Service { get; private set; }
 
@@ -94,15 +94,9 @@ namespace OwaAttachmentServer
 
             if (loginModel != null)
             {
-                SetUrl(loginModel.Host);
                 CreateProvider(loginModel.Login, loginModel.Password);
             }
         }
-
-        public static void SetUrl(string url)
-        {
-            Url = url;
-        }   
 
         public static bool CreateProvider(string login, string password)
         {
@@ -114,7 +108,7 @@ namespace OwaAttachmentServer
 
                 service.Credentials = new WebCredentials(login?.Trim(), password);
 
-                service.Url = new Uri($"{Url ?? "https://webmail.dhsforyou.com"}/EWS/Exchange.asmx");
+                service.Url = new Uri($"{Url}/EWS/Exchange.asmx");
 
                 service.FindFolders(WellKnownFolderName.Root, new SearchFilter.IsGreaterThan(FolderSchema.TotalCount, 0), new FolderView(5));
 

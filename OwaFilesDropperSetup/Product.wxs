@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-  <Product Id="6fe30b47-2577-43ad-9195-1861ca25889c" Name="DHS Owa Files Dropper" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9195-1861ba25889b" Manufacturer="DHS">
+  <Product Id="6fe30b47-2577-43ad-9195-1861ca25889c" Name="DHS Owa Files Dropper" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9195-1861ba25889b" Manufacturer="Digicom Healthcare Solutions">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" InstallPrivileges="elevated" />
     <Media Id="1" Cabinet="DHS_Owa_Files_Dropper.cab" EmbedCab="yes" />
     <Property Id="ALLUSERS" Value="2" />
@@ -26,6 +26,11 @@
               <File Id="Microsoft.Owin.Security.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Security.dll" />
               <File Id="Newtonsoft.Json.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Newtonsoft.Json.dll" />
               <File Id="OwaAttachmentServer.exe.config" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe.config">
+                <Permission User="Everyone" GenericAll="yes"
+                      ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
+                      SpecificRightsAll ="yes" />
+              </File>
+              <File Id="Permissions.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Permissions.dll">
                 <Permission User="Everyone" GenericAll="yes"
                       ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
                       SpecificRightsAll ="yes" />
