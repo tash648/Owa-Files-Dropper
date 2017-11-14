@@ -21,15 +21,14 @@ namespace OwaAttachmentServer
             public string TempPath { get; set; }
 
             public string Name { get; set; }
-
-            public byte[] Content { get; set; }
         }
 
         private bool isDisposed;
 
         private FileSystemWatcher tempFilesWatcher;
 
-        private volatile string lastEmailId = string.Empty;
+        private volatile List<FileInformation> newFiles;
+
         private Semaphore semaphore = new Semaphore(5, 5);
         private string directoryPath;
 
@@ -68,34 +67,30 @@ namespace OwaAttachmentServer
 
                         if (newFiles.Any())
                         {
-                            lock (lockObject)
+                            var infos = newFiles.Select(p => new FileInformation()
                             {
-                                var infos = newFiles.Select(p => new FileInformation()
-                                {
-                                    FullName = p.FullName,
-                                    Content = File.ReadAllBytes(p.FullName),
-                                    Name = p.Name,
-                                    TempPath = Path.ChangeExtension(p.FullName, $"{p.Extension}.tmp")
-                                }).ToList();
+                                FullName = p.FullName,
+                                Name = p.Name,
+                                TempPath = Path.ChangeExtension(p.FullName, $"{p.Extension}.tmp")
+                            }).ToList();
 
-                                infos.ForEach(file =>
+                            infos.ForEach(file =>
+                            {
+                                try
                                 {
-                                    try
-                                    {
-                                        File.Move(file.FullName, file.TempPath);
-                                    }
-                                    catch (Exception)
-                                    { }
-                                });
+                                    File.Move(file.FullName, file.TempPath);
+                                }
+                                catch (Exception)
+                                { }
+                            });
 
-                                ExportFilesOnCreated(infos); 
-                            }
+                            ExportFilesOnCreated(infos);
                         }
                     }
                     catch (Exception)
-                    { }
+                    { } 
                 }
-            }, null, 0, 5000);
+            }, null, 0, 3000);
         }
 
         private void TempFilesWatcher_Created(object sender, FileSystemEventArgs e)
@@ -212,7 +207,7 @@ namespace OwaAttachmentServer
                                 {
                                     files.ForEach(file =>
                                     {
-                                        message.Attachments.AddFileAttachment(file.Name, file.Content);
+                                        message.Attachments.AddFileAttachment(file.Name, File.ReadAllBytes(file.TempPath));
                                     });
 
                                     lock (lockObject)
