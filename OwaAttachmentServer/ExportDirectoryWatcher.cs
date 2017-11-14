@@ -21,6 +21,8 @@ namespace OwaAttachmentServer
             public string TempPath { get; set; }
 
             public string Name { get; set; }
+
+            public byte[] Content { get; set; }
         }
 
         private bool isDisposed;
@@ -37,7 +39,10 @@ namespace OwaAttachmentServer
             return Path.Combine(Path.GetTempPath(), $"{id}.full");
         }
 
-        private object lockObject = new object();
+        private object createLockLockObject = new object();
+        private object tempLockObject = new object();
+        private object updateLockObject = new object();
+
         private System.Threading.Timer timer;
         private DateTime lastRead = DateTime.MinValue;
         private Dictionary<string, System.Threading.Tasks.Task> tasks = new Dictionary<string, System.Threading.Tasks.Task>();
@@ -59,7 +64,7 @@ namespace OwaAttachmentServer
         {
             timer = new System.Threading.Timer(o =>
             {
-                lock (lockObject)
+                lock (tempLockObject)
                 {
                     try
                     {
@@ -71,7 +76,8 @@ namespace OwaAttachmentServer
                             {
                                 FullName = p.FullName,
                                 Name = p.Name,
-                                TempPath = Path.ChangeExtension(p.FullName, $"{p.Extension}.tmp")
+                                Content = File.ReadAllBytes(p.FullName),
+                                TempPath = Path.ChangeExtension(p.FullName, $"{p.Extension}.{Guid.NewGuid().ToString().Replace("-", string.Empty)}.tmp")
                             }).ToList();
 
                             infos.ForEach(file =>
@@ -87,8 +93,10 @@ namespace OwaAttachmentServer
                             ExportFilesOnCreated(infos);
                         }
                     }
-                    catch (Exception)
-                    { } 
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+                    } 
                 }
             }, null, 0, 3000);
         }
@@ -126,7 +134,7 @@ namespace OwaAttachmentServer
 
             if (!File.Exists(lockFileName) && !File.Exists(oldLockFileName))
             {
-                lock (lockObject)
+                lock (createLockLockObject)
                 {
                     if (File.Exists(lockFileName) || File.Exists(oldLockFileName))
                     {
@@ -207,10 +215,10 @@ namespace OwaAttachmentServer
                                 {
                                     files.ForEach(file =>
                                     {
-                                        message.Attachments.AddFileAttachment(file.Name, File.ReadAllBytes(file.TempPath));
+                                        message.Attachments.AddFileAttachment(file.Name, file.Content);
                                     });
 
-                                    lock (lockObject)
+                                    lock (updateLockObject)
                                     {
                                         message.Update(ConflictResolutionMode.AutoResolve);
                                         attached = true;
