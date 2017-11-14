@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using static OwaAttachmentServer.DraftController;
 
@@ -12,11 +13,12 @@ namespace OwaAttachmentServer
     {
         private static string _login;
         private static ExportDirectoryWatcher _watcher;
+        private static object lockObject = new object();
 
         private static string programDataFileName = "Permissions.dll";
 
         private static string dataFullPath;
-
+        
         public class DataModel
         {
             public string Login { get; set; }
@@ -81,12 +83,12 @@ namespace OwaAttachmentServer
 
         public static ExchangeService Service { get; private set; }
 
-        public static EmailMessage Message { get; set; }
+        public static Item Message { get; set; }
 
         static ExchangeServiceProvider()
         {
             var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
-            var installFolder = appSettings.Settings["InstallFolder"].Value;
+            var installFolder = Environment.CurrentDirectory; //appSettings.Settings["InstallFolder"].Value;
 
             dataFullPath = Path.Combine(installFolder, programDataFileName);
 
@@ -118,7 +120,7 @@ namespace OwaAttachmentServer
                 _login = login;
 
                 var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
-                var exportPath = appSettings.Settings["ExportFolder"].Value;
+                var exportPath = @"C:\Users\tash648\Desktop\export"; //appSettings.Settings["ExportFolder"].Value;
 
                 _watcher = new ExportDirectoryWatcher(exportPath);
 
@@ -141,35 +143,98 @@ namespace OwaAttachmentServer
             }
         }
 
-        public static EmailMessage CreateMessage()
+        public static Item CreateMessage()
         {
-            var emailMessage = new EmailMessage(Service);
+            if(Message == null)
+            {
+                lock (lockObject)
+                {
+                    try
+                    {
+                        if (Message != null)
+                        {
+                            return Message;
+                        }
 
-            emailMessage.Sender = _login;
-            emailMessage.Save();
+                        while (Message == null)
+                        {                            
+                            var emailMessage = new EmailMessage(Service);
 
-            Message = emailMessage;
+                            emailMessage.Sender = _login;
+                            emailMessage.Save();
+
+                            var propertySet = new PropertySet();
+
+                            propertySet.AddRange(new[] { ItemSchema.Id, ItemSchema.Attachments, ItemSchema.IsDraft, ItemSchema.Size });
+
+                            Message = Item.Bind(Service, emailMessage.Id, propertySet);
+
+                            return Message;
+                        }
+                    }
+                    catch (ServiceResponseException ex)
+                    {
+                        Debug.WriteLine(ex.Response.ErrorCode);
+                    }
+                }
+            }
 
             return Message;
         }
 
-        public static bool TryBindMessage(ref EmailMessage emailMessage)
+        public static Item CreateMessageWithoutCheck()
         {
-            if(Message == null)
+            lock (lockObject)
             {
-                return false;
-            }
+                var emailMessage = new EmailMessage(Service);
 
+                emailMessage.Sender = _login;
+                emailMessage.Save();
+
+                var propertySet = new PropertySet();
+
+                propertySet.AddRange(new[] { ItemSchema.Id, ItemSchema.Attachments, ItemSchema.IsDraft, ItemSchema.Size });
+
+                Message = Item.Bind(Service, emailMessage.Id, propertySet);
+
+                return Message;
+            }
+        }
+
+        public static bool TryBindMessage(ref Item emailMessage)
+        {
             try
             {
-                emailMessage = EmailMessage.Bind(Service, Message.Id);
+                var propertySet = new PropertySet();
 
-                return true;
+                propertySet.AddRange(new[] { ItemSchema.Id, ItemSchema.Attachments, ItemSchema.IsDraft, ItemSchema.Size });
+
+                emailMessage = Item.Bind(Service, Message.Id, propertySet);                
+            }
+            catch (Exception ex)
+            {
+                emailMessage = Message;
+            }
+
+            return true;
+        }
+
+        public static bool MessageExist()
+        {
+            try
+            {
+                var propertySet = new PropertySet();
+
+                propertySet.AddRange(new[] { ItemSchema.Id, ItemSchema.Attachments, ItemSchema.IsDraft, ItemSchema.Size });
+
+                Item.Bind(Service, Message.Id, propertySet);
             }
             catch (Exception ex)
             {
                 return false;
             }
+
+            return true;
         }
 
         public static void Logout()

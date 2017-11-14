@@ -15,7 +15,9 @@ namespace OwaAttachmentServer
 
         public void Start()
         {
-            var baseAddress = "http://*:4433";            
+            var baseAddress = "http://*:4433";
+
+            var url = ExchangeServiceProvider.Url;
 
             var options = new StartOptions(baseAddress);
 

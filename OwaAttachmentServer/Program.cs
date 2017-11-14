@@ -11,12 +11,15 @@ namespace OwaAttachmentServer
         /// </summary>
         static void Main(string[] args)
         {
-            ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
-            {
-                new OwaFilesListener()
-            };
-            ServiceBase.Run(ServicesToRun);
+            new OwaFilesListener().Start();
+            Console.ReadLine();
+
+            //ServiceBase[] ServicesToRun;
+            //ServicesToRun = new ServiceBase[]
+            //{
+            //    new OwaFilesListener()
+            //};
+            //ServiceBase.Run(ServicesToRun);
         }
     }
 }

@@ -129,7 +129,7 @@
     </None>
     <None Include="ClassDiagram1.cd" />
     <Content Include="Permissions.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="localhost.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
