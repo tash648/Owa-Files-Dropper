@@ -1,14 +1,17 @@
 ﻿using Microsoft.Exchange.WebServices.Data;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace OwaAttachmentServer
 {
@@ -29,9 +32,7 @@ namespace OwaAttachmentServer
 
         private FileSystemWatcher tempFilesWatcher;
 
-        private volatile List<FileInformation> newFiles;
-
-        private Semaphore semaphore = new Semaphore(5, 5);
+        private Semaphore semaphore = new Semaphore(1, 1);
         private string directoryPath;
 
         private string GetLockFileName(string id)
@@ -80,25 +81,34 @@ namespace OwaAttachmentServer
                                 TempPath = Path.ChangeExtension(p.FullName, $"{p.Extension}.{Guid.NewGuid().ToString().Replace("-", string.Empty)}.tmp")
                             }).ToList();
 
+                            var takeCount = ExchangeServiceProvider.NewMessage ? 1 : infos.Count;
+
+                            infos = infos.Take(takeCount).ToList();
+
+                            while (infos.Sum(p => p.Content.Length) > 25165824)
+                            {
+                                infos = infos.Skip(1).ToList();
+                            }
+
                             infos.ForEach(file =>
                             {
                                 try
                                 {
                                     File.Move(file.FullName, file.TempPath);
                                 }
-                                catch (Exception)
-                                { }
+                                catch (Exception ex)
+                                {
+                                    var a = ex.Message;
+                                }
                             });
 
                             ExportFilesOnCreated(infos);
                         }
                     }
                     catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-                    } 
+                    { }
                 }
-            }, null, 0, 3000);
+            }, null, 0, 100);
         }
 
         private void TempFilesWatcher_Created(object sender, FileSystemEventArgs e)
@@ -106,7 +116,7 @@ namespace OwaAttachmentServer
             try
             {
                 if (File.Exists(e.FullPath))
-                {
+                {   
                     ExchangeServiceProvider.Message = null;
                     ExchangeServiceProvider.CreateMessage();
 
@@ -114,9 +124,7 @@ namespace OwaAttachmentServer
                 }
             }
             catch (ServiceResponseException ex)
-            {
-                Debug.WriteLine(ex.Response.ErrorCode);
-            }
+            { }
         }
 
         private string GetOldLockFilePath(string oldId)
@@ -172,6 +180,84 @@ namespace OwaAttachmentServer
             }
         }
 
+        private bool CreateAttachmentRequest(List<FileInformation> files)
+        {
+            var body = new CreateAttachmentJsonRequest()
+            {
+                __type = "CreateAttachmentJsonRequest:#Exchange",
+                Header = new Header
+                {
+                    __type = "JsonRequestHeaders:#Exchange",
+                    RequestServerVersion = "Exchange2013",
+                    TimeZoneContext = new Timezonecontext
+                    {
+                        __type = "TimeZoneContext:#Exchange",
+                        TimeZoneDefinition = new Timezonedefinition
+                        {
+                            __type = "TimeZoneDefinitionType:#Exchange",
+                            Id = "Pacific Standard Time"
+                        }
+                    }
+                }
+            };
+
+            var attachments = files.Select(p => new Attachment
+            {
+                __type = "FileAttachment:#Exchange",
+                Content = Convert.ToBase64String(p.Content),
+                ContentType = "application/x-msdownload",
+                IsContactPhoto = false,
+                IsInline = false,
+                Name = p.Name,
+                Size = p.Content.Length
+            }).ToArray();
+
+            body.Body = new Body
+            {
+                __type = "CreateAttachmentRequest:#Exchange",
+                ParentItemId = new Parentitemid
+                {
+                    __type = "ItemId:#Exchange",
+                    Id = ExchangeServiceProvider.Message.Id.UniqueId,
+                    ChangeKey = ExchangeServiceProvider.Message.Id.ChangeKey
+                },
+                Attachments = attachments,
+                RequireImageType = false,
+                IncludeContentIdInResponse = false,
+                ClientSupportsIrm = true,
+                CancellationId = null
+            };
+
+            var client = new WebClient();
+
+            client.BaseAddress = ExchangeServiceProvider.Url;
+
+            foreach(var item in ExchangeServiceProvider.Service.HttpHeaders)
+            {
+                client.Headers.Add(item.Key, item.Value);
+            }
+
+            client.Headers.Add(HttpRequestHeader.ContentLength, files.Sum(p => p.Content.Length).ToString());
+            client.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=UTF-8");
+            client.Headers.Add("Action", "CreateAttachment");
+            client.Headers.Add("Referer", "https://webmail.dhsforyou.com/owa/");
+            client.Headers.Add("Origin: https://webmail.dhsforyou.com");
+            client.Headers.Add("Connection: keep-alive");
+
+            var bodyString = JsonConvert.SerializeObject(body);
+
+            try
+            {
+                client.UploadData("/owa/service.svc?action=CreateAttachment&ID=-114&AC=1", "POST", Encoding.UTF8.GetBytes(bodyString));
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public void Run()
         {
             var tempFolderFiles = new DirectoryInfo(Path.GetTempPath()).GetFiles("*.full").ToList();
@@ -194,6 +280,10 @@ namespace OwaAttachmentServer
                     ExchangeServiceProvider.CreateMessage();
                 }
 
+                var attachmentsSize = files.Sum(p => p.Content.Length);
+                
+                semaphore.WaitOne();
+
                 System.Threading.Tasks.Task.Run(() =>
                 {
                     var attached = false;
@@ -209,20 +299,27 @@ namespace OwaAttachmentServer
                                 continue;
                             }
 
-                            if (ExchangeServiceProvider.TryBindMessage(ref message))
+                            var error = false;
+                            
+                            if (ExchangeServiceProvider.TryBindMessage(attachmentsSize, ref message, out error))
                             {
                                 try
                                 {
+                                    if (error)
+                                    {
+                                        CreateLockFile(GetMd5Hash(message.Id.UniqueId));
+                                        continue;
+                                    }
+
                                     files.ForEach(file =>
                                     {
                                         message.Attachments.AddFileAttachment(file.Name, file.Content);
                                     });
 
-                                    lock (updateLockObject)
-                                    {
-                                        message.Update(ConflictResolutionMode.AutoResolve);
-                                        attached = true;
-                                    }
+                                    message.Update(ConflictResolutionMode.AutoResolve, true);
+                                    ExchangeServiceProvider.NewMessage = false;
+
+                                    attached = true;
                                 }
                                 catch (CreateAttachmentException ex)
                                 {
@@ -249,13 +346,15 @@ namespace OwaAttachmentServer
                         { }
                     }
 
+                    semaphore.Release();
+
                     files.ForEach(file =>
                     {
                         try
                         {
                             File.Delete(file.TempPath);
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         { }
                     });
                 });
@@ -271,6 +370,7 @@ namespace OwaAttachmentServer
                 try
                 {
                     semaphore?.Dispose();
+                    timer?.Dispose();
                 }
                 catch (Exception)
                 { }

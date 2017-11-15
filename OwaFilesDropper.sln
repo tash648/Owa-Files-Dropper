@@ -11,6 +11,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "OwaFilesDropperSetup", "Owa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwaFilesDropperSetupCA", "OwaFilesDropperSetupCustomAction\OwaFilesDropperSetupCA.csproj", "{C15B5273-3BA0-4BFD-872C-B6915AB6FF50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Exchange.WebServices.Data", "ews-managed-api-master\Microsoft.Exchange.WebServices.Data.csproj", "{F059972F-0561-4203-ABB8-3ABB41CCBE22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,14 @@ Global
 		{C15B5273-3BA0-4BFD-872C-B6915AB6FF50}.Release|Any CPU.ActiveCfg = Release|x86
 		{C15B5273-3BA0-4BFD-872C-B6915AB6FF50}.Release|x86.ActiveCfg = Release|x86
 		{C15B5273-3BA0-4BFD-872C-B6915AB6FF50}.Release|x86.Build.0 = Release|x86
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Debug|x86.Build.0 = Debug|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Release|x86.ActiveCfg = Release|Any CPU
+		{F059972F-0561-4203-ABB8-3ABB41CCBE22}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
