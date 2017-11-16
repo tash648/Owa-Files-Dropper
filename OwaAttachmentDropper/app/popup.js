@@ -72,6 +72,14 @@ $(document).ready(function () {
         });
     });  
 
+    $("#sign").click(e => {
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            var tab = tabs[0];
+            chrome.tabs.update(tab.id, { url: 'https://webmail.dhsforyou.com' });
+            window.close();
+        });
+    });
+
     $('#logout').click(e => {
         $('#logouting').show();
         $("#logout").attr('disabled', true);

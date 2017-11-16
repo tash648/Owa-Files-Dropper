@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OwaAttachmentServer
+namespace OwaAttachmentServer.Request
 {
     public class CreateAttachmentJsonRequest
     {

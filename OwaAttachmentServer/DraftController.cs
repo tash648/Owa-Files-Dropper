@@ -1,7 +1,4 @@
-﻿using Microsoft.Exchange.WebServices.Data;
-using System.Configuration;
-using System.Diagnostics;
-using System.Web.Http;
+﻿using System.Web.Http;
 
 namespace OwaAttachmentServer
 {
@@ -9,16 +6,14 @@ namespace OwaAttachmentServer
     {        
         public class LoginModel
         {
-            public string email { get; set; }
-
-            public string password { get; set; }
+            public string cookie { get; set; }
         }
 
         [Route("login")]
         [HttpPost]
         public IHttpActionResult Login(LoginModel model)
         {
-            return Ok(ExchangeServiceProvider.CreateProvider(model.email, model.password));
+            return Ok(ExchangeServiceProvider.SetCookie(model.cookie));
         }
 
         [Route("create")]
@@ -33,7 +28,7 @@ namespace OwaAttachmentServer
         [HttpGet]
         public IHttpActionResult Logined()
         {
-            return Ok(ExchangeServiceProvider.Service != null);
+            return Ok(ExchangeServiceProvider.CookieExist());
         }
 
         [HttpGet]
@@ -58,32 +53,6 @@ namespace OwaAttachmentServer
             var returnUrl = $"{exchangeUrl}/owa";
 
             return Ok(returnUrl);
-        }
-
-        [Route("open")]
-        [HttpGet]
-        public IHttpActionResult Open()
-        {
-            var propSet = new PropertySet();
-
-            propSet.Add(ItemSchema.Id);
-            propSet.Add(ItemSchema.WebClientReadFormQueryString);
-            propSet.Add(ItemSchema.WebClientEditFormQueryString);
-
-            try
-            {
-                var item = Item.Bind(ExchangeServiceProvider.Service, ExchangeServiceProvider.Message.Id, propSet);
-
-                var exchangeUrl = ExchangeServiceProvider.Url;
-
-                var returnUrl = $"{exchangeUrl}/owa{item.WebClientEditFormQueryString}";
-
-                return Ok(returnUrl);
-            }
-            catch (System.Exception)
-            {
-                return Ok();
-            }
         }
     }
 }

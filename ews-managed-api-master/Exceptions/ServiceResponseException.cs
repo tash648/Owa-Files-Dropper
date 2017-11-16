@@ -40,6 +40,9 @@ namespace Microsoft.Exchange.WebServices.Data
         private const string ExceptionMessageKey = "ExceptionMessage";
         private const string StackTraceKey = "StackTrace";
 
+        private ServiceError errorCode;
+        private string message;
+
         /// <summary>
         /// ServiceResponse when service operation failed remotely.
         /// </summary>
@@ -52,6 +55,11 @@ namespace Microsoft.Exchange.WebServices.Data
         internal ServiceResponseException(ServiceResponse response)
         {
             this.response = response;
+        }
+
+        public ServiceResponseException(ServiceError errorCode)
+        {
+            this.errorCode = errorCode;
         }
 
         /// <summary>
@@ -67,7 +75,15 @@ namespace Microsoft.Exchange.WebServices.Data
         /// </summary>
         public ServiceError ErrorCode
         {
-            get { return this.response.ErrorCode; }
+            get
+            {
+                if(this.response == null)
+                {
+                    return errorCode;
+                }
+
+                return this.response.ErrorCode;
+            }
         }
 
         /// <summary>
@@ -78,6 +94,11 @@ namespace Microsoft.Exchange.WebServices.Data
         {
             get
             {
+                if(response == null)
+                {
+                    return string.Empty;
+                }
+
                 // Special case for Internal Server Error. If the server returned
                 // stack trace information, include it in the exception message.
                 if (this.Response.ErrorCode == ServiceError.ErrorInternalServerError)

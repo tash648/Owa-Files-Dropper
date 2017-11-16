@@ -99,10 +99,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseBody.cs" />
+    <Compile Include="CreateMessageRequest.cs" />
     <Compile Include="CreateAttachmentJsonRequest.cs" />
+    <Compile Include="CreateAttachmentJsonResponse.cs" />
     <Compile Include="DraftController.cs" />
+    <Compile Include="ExchangeItem.cs" />
     <Compile Include="ExchangeServiceProvider.cs" />
     <Compile Include="ExportDirectoryWatcher.cs" />
+    <Compile Include="CreateMessageResponse.cs" />
+    <Compile Include="GetMessageRequest.cs" />
+    <Compile Include="GetMessageResponse.cs" />
     <Compile Include="OwaFilesListener.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -148,7 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ews-managed-api-master\Microsoft.Exchange.WebServices.Data.csproj">
-      <Project>{f059972f-0561-4203-abb8-3abb41ccbe22}</Project>
+      <Project>{F059972F-0561-4203-ABB8-3ABB41CCBE22}</Project>
       <Name>Microsoft.Exchange.WebServices.Data</Name>
     </ProjectReference>
   </ItemGroup>
