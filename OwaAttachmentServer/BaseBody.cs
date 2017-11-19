@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OwaAttachmentServer
 {
-    public interface IEwsRequest
+    public interface IEwsResponse
     {
         string GetErrorCode();
     }

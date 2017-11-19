@@ -13,10 +13,8 @@
         <Directory Id="ProgramFilesFolder.DHS" Name="DHS">
           <Directory Id="INSTALLDIR" Name="Owa Files Dropper">
             <Component Id="Component.OwaAttachmentServer.exe" Guid="6fe30b47-2577-43ad-9195-18619763f42b">
-              <File Id="OwaAttachmentServer.exe" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe" KeyPath='yes'/>
-              <File Id="Microsoft.Exchange.WebServices.Auth.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.Auth.dll" />
-              <File Id="Microsoft.Exchange.WebServices.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.dll" />              
-              <File Id="Microsoft.IdentityModel.Extensions.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.IdentityModel.Extensions.dll" />
+              <File Id="OwaAttachmentServer.exe" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe" KeyPath='yes'/>              
+              <File Id="Microsoft.Exchange.WebServices.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.dll" />        
               <File Id="Microsoft.Owin.Cors.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.Cors.dll" />
               <File Id="Microsoft.Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.dll" />
               <File Id="Microsoft.Owin.FileSystems.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Owin.FileSystems.dll" />
@@ -29,12 +27,7 @@
                 <Permission User="Everyone" GenericAll="yes"
                       ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
                       SpecificRightsAll ="yes" />
-              </File>
-              <File Id="Permissions.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Permissions.dll">
-                <Permission User="Everyone" GenericAll="yes"
-                      ChangePermission="yes" TakeOwnership="yes" GenericExecute ="yes" Read="yes" GenericWrite ="yes" GenericRead ="yes" ReadPermission ="yes"
-                      SpecificRightsAll ="yes" />
-              </File>
+              </File>              
               <File Id="Owin.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Owin.dll" />
               <File Id="System.Net.Http.Formatting.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Net.Http.Formatting.dll" />
               <File Id="System.Web.Cors.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\System.Web.Cors.dll" />

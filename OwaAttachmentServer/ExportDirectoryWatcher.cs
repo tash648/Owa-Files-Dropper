@@ -101,7 +101,7 @@ namespace OwaAttachmentServer
                     catch (Exception ex)
                     { }
                 }
-            }, null, 0, 3000);
+            }, null, 0, 100);
         }
 
         private void TempFilesWatcher_Created(object sender, FileSystemEventArgs e)
@@ -198,19 +198,36 @@ namespace OwaAttachmentServer
         {
             try
             {
-                if(files == null || files.Count == 0)
+                if (files == null || files.Count == 0)
                 {
                     return;
-                }
+                }                
 
                 if (ExchangeServiceProvider.Message == null)
                 {
                     ExchangeServiceProvider.CreateMessage();
+
+                    if(ExchangeServiceProvider.Message == null)
+                    {
+                        files.ForEach(file =>
+                        {
+                            try
+                            {
+                                File.Move(file.TempPath, file.FullName);
+                            }
+                            catch (Exception ex)
+                            { }
+                        });
+
+                        return;
+                    }
                 }
 
-                var attachmentsSize = files.Sum(p => p.Content.Length);
-                
                 semaphore.WaitOne();
+
+                ExchangeServiceProvider.SetInProgress(true);
+
+                var attachmentsSize = files.Sum(p => p.Content.Length);
 
                 System.Threading.Tasks.Task.Run(() =>
                 {
@@ -230,7 +247,7 @@ namespace OwaAttachmentServer
                             }
 
                             var error = false;
-                            
+
                             if (ExchangeServiceProvider.TryBindMessage(attachmentsSize, ref message, out error))
                             {
                                 try
@@ -238,6 +255,7 @@ namespace OwaAttachmentServer
                                     if (error)
                                     {
                                         CreateLockFile(GetMd5Hash(message.Id));
+
                                         continue;
                                     }
 
@@ -272,6 +290,8 @@ namespace OwaAttachmentServer
                         catch (Exception ex)
                         { }
                     }
+
+                    ExchangeServiceProvider.SetInProgress(false);
 
                     semaphore.Release();
                 });

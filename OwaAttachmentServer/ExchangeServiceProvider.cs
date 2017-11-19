@@ -16,26 +16,10 @@ namespace OwaAttachmentServer
     {
         private static ExportDirectoryWatcher _watcher;
         private static object lockObject = new object();
-
-        public static string Url { get; private set; } = "https://webmail.dhsforyou.com";
-
-        public static ExchangeItem Message { get; set; }
-
-        public static string CurrentToken { get; set; }
-
-        public static string CurrentCookie { get; set; }
-
-        public static bool NewMessage { get; set; } = true;
-
-        public static void CreateAttachment(params FileInformation[] files)
-        {
-            var body = GetCreateAttachmentBody(files);
-
-            var result = EwsRequest<Response.CreateAttachmentJsonResponse>(body, "CreateAttachment");
-        }
+        private static object inProgressLock = new object();
 
         private static T EwsRequest<T>(object body, string action)
-            where T: IEwsRequest
+            where T: IEwsResponse
         {
             var webRequest = GetPrepearedRequest(body, action);
 
@@ -76,12 +60,10 @@ namespace OwaAttachmentServer
                     return result;
                 }
             }
-            catch (WebException exc)
+            catch (WebException ex)
             {
-                if (exc.Response != null)
+                if (ex.Response != null)
                 {
-                    var resp = new StreamReader(exc.Response.GetResponseStream()).ReadToEnd();
-
                     ResetCookie();
 
                     throw new ServiceResponseException(ServiceError.ErrorAccessDenied);
@@ -116,7 +98,7 @@ namespace OwaAttachmentServer
             {
                 __type = "FileAttachment:#Exchange",
                 Content = Convert.ToBase64String(p.Content),
-                ContentType = "application/x-msdownload",
+                ContentType = "",
                 IsContactPhoto = false,
                 IsInline = false,
                 Name = p.Name,
@@ -169,6 +151,22 @@ namespace OwaAttachmentServer
             return null;
         }
 
+        private static bool FindItem(string id)
+        {
+            var body = new FindItemRequest.FindItemRequest();
+
+            var item = EwsRequest<FindItemResponse>(body, "FindItem");
+
+            if (item != null)
+            {
+                var ids = item.Body.ResponseMessages.Items.SelectMany(p => p.RootFolder.Items).Select(p => p.ItemId).ToList();
+
+                return ids.Any(p => p.Id == id);
+            }
+
+            return false;
+        }
+
         private static void UpdateCookies(string cookie)
         {
             if (string.IsNullOrEmpty(cookie))
@@ -214,9 +212,13 @@ namespace OwaAttachmentServer
             webRequest.ContentType = "application/json; charset=UTF-8";
             webRequest.KeepAlive = true;
 
+            webRequest.Headers.Add("Accept-Encoding: gzip, deflate, br");
             webRequest.Headers.Add($"Action: {action}");
             webRequest.Headers.Add("X-OWA-CANARY", ExchangeServiceProvider.CurrentToken);
             webRequest.Headers.Add(ExchangeServiceProvider.CurrentCookie);
+
+            webRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            webRequest.ServicePoint.Expect100Continue = false;
 
             using (var stream = webRequest.GetRequestStream())
             {
@@ -224,6 +226,51 @@ namespace OwaAttachmentServer
             }
 
             return webRequest;
+        }
+
+        public static string Url { get; private set; } = "https://webmail.dhsforyou.com";
+
+        public static ExchangeItem Message { get; set; }
+
+        public static string CurrentToken { get; set; }
+
+        public static string CurrentCookie { get; set; }
+
+        public static bool InProgress { get; set; }
+
+        public static bool NewMessage { get; set; } = true;
+
+        public static void CreateAttachment(params FileInformation[] files)
+        {
+            var body = GetCreateAttachmentBody(files);
+
+            var result = EwsRequest<Response.CreateAttachmentJsonResponse>(body, "CreateAttachment");
+        }
+
+        public static void SetInProgress(bool value)
+        {
+            if(InProgress == value)
+            {
+                return;
+            }
+
+            lock (inProgressLock)
+            {
+                if(InProgress == value)
+                {
+                    return;
+                }
+
+                InProgress = value;
+            }
+        }
+
+        public static bool IsInProgress()
+        {
+            lock (inProgressLock)
+            {
+                return InProgress;
+            }
         }
 
         public static bool CookieExist()
@@ -271,7 +318,7 @@ namespace OwaAttachmentServer
                 UpdateCookies(cookie);
 
                 var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
-                var exportPath = @"C:\Users\tash648\Desktop\export"; //appSettings.Settings["ExportFolder"].Value;
+                var exportPath = appSettings.Settings["ExportFolder"].Value;
 
                 _watcher = new ExportDirectoryWatcher(exportPath);
 
@@ -333,12 +380,12 @@ namespace OwaAttachmentServer
                     return true;
                 }
 
-                emailMessage = GetMessagePrivate(Message.Id, Message.ChangeKey);
-
-                if ((emailMessage.Size + attachmentsLength) > 25165824)
+                if (!FindItem(Message.Id))
                 {
                     error = true;
                 }
+
+                emailMessage = Message;
             }
             catch (Exception ex)
             {

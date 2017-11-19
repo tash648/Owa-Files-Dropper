@@ -108,6 +108,8 @@
     <Compile Include="ExchangeServiceProvider.cs" />
     <Compile Include="ExportDirectoryWatcher.cs" />
     <Compile Include="CreateMessageResponse.cs" />
+    <Compile Include="FindItemRequest.cs" />
+    <Compile Include="FindItemResponse.cs" />
     <Compile Include="GetMessageRequest.cs" />
     <Compile Include="GetMessageResponse.cs" />
     <Compile Include="OwaFilesListener.cs">

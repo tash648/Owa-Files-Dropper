@@ -9,6 +9,13 @@ namespace OwaAttachmentServer
             public string cookie { get; set; }
         }
 
+        [Route("progress")]
+        [HttpGet]
+        public IHttpActionResult Progress(LoginModel model)
+        {
+            return Ok(ExchangeServiceProvider.IsInProgress());
+        }
+
         [Route("login")]
         [HttpPost]
         public IHttpActionResult Login(LoginModel model)

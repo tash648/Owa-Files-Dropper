@@ -1,128 +1,94 @@
-﻿var version = "1.0";
-var tabs = [];
-var sendCookieInProgress = false;
-var attachInProgress = false;
+﻿var lastLoginedDate;
+var minutes = 60;
 
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    if (tab.url && tab.url.includes('https://webmail.dhsforyou.com/owa/#path=/mail')) {
-        if (attachInProgress) {
-            return;
-        }
-        attachInProgress = true;
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {    
+    if (tab.url && tab.url.includes('https://webmail.dhsforyou.com/owa/auth/logon.aspx')) {
         $.ajax({
             url: 'http://localhost:4433/api/draft/logined',
             type: 'GET',
+            async: false,
             success: function (e) {
-                if (e === false) {
-                    var tabIdLocal = tabId;
-                    var cookie;
-
-                    if (tabs[tabId] === undefined) {
-                        tabs[tabId] = tabId;
-                        chrome.debugger.attach({
-                            tabId: tabId
-                        }, version, function (tabId) {
-                            onAttach(tabIdLocal, cookie);
-                        });
-                        chrome.tabs.get(tabIdLocal, function (tab) {
-                            if (tab.url && tab.url.includes('https://webmail.dhsforyou.com/owa/#path=/mail')) {
-                                chrome.tabs.reload(tab.id);
-                            }
-                        });
-                    }                                        
+                if (e === true) {
+                    $.ajax({
+                        async: false,
+                        url: 'http://localhost:4433/api/draft/logout',
+                        type: 'GET',
+                        success: function (e) { }
+                    });
+                    lastLoginedDate = undefined;
                 }
-            },
-            complete: function () {
-                attachInProgress = false;
-            },
-            error: function () {
-                attachInProgress = false;
             }
-        });
-
-        return;
-    }     
-
-    if (tab.url && tab.url.includes('https://webmail.dhsforyou.com/owa/auth/logon.aspx')) {
-        $.ajax({
-            url: 'http://localhost:4433/api/draft/logout',
-            type: 'GET',
-            success: function (e) {
-                tabs[tab.id] = undefined; 
-            }
-        });
+        });       
     }
 });
 
 chrome.tabs.onActivated.addListener(function (info) {
     chrome.tabs.get(info.tabId, function (tab) {         
         if (tab.url && tab.url.includes('https://webmail.dhsforyou.com/owa/#path=/mail')) {
+            var loginDate = new Date(lastLoginedDate);
             $.ajax({
                 url: 'http://localhost:4433/api/draft/logined',
                 type: 'GET',
+                async: false,
                 success: function (e) {
-                    if (e === false) {
+                    if (e === false || _.isUndefined(lastLoginedDate) || (loginDate.setMinutes(loginDate.getMinutes() + minutes)) < new Date()) {
                         chrome.tabs.reload(tab.id);
                     }
                 }
             });
         }         
     });  
-         
 });
 
-function allEventHandler(cookie, debuggeeId, message, params) {
-    if (params && params.response && params.response.requestHeaders && params.response.requestHeaders.Cookie && params.response.requestHeaders.Cookie.includes('X-OWA-CANARY')) {
-        var requestInfo = params.response;
-        var tabId = debuggeeId.tabId;
+chrome.webRequest.onBeforeRequest.addListener(
+    function (details) {
+        var cancel = false;
+        $.ajax({
+            url: 'http://localhost:4433/api/draft/progress',
+            async: false,
+            type: 'GET',
+            success: function (e) {
+                cancel = e;
+            }
+        });
 
-        if (!sendCookieInProgress) {
-            sendCookieInProgress = true;
+        return { cancel: cancel };
+    },
+    { urls: ["https://webmail.dhsforyou.com/owa/ev.owa2?ns=PendingRequest*"] },
+    ["blocking"]);
 
-            $.ajax({
-                url: 'http://localhost:4433/api/draft/logined',
-                type: 'GET',
-                success: function (e) {
-                    if (e === false) {
-                        chrome.debugger.sendCommand({
-                            tabId: debuggeeId.tabId
-                        }, "Network.getResponseBody", {
-                                "requestId": params.requestId
-                            }, function (response) {
-                                $.ajax({
-                                    url: 'http://localhost:4433/api/draft/login',
-                                    type: 'POST',
-                                    data: {
-                                        cookie: requestInfo.requestHeaders.Cookie
-                                    },
-                                    success: function (e) {
-                                        chrome.debugger.detach({
-                                            tabId: tabId
-                                        });
-
-                                        tabs[tabId] = undefined;
-                                    },
-                                    complete: function () {
-                                        sendCookieInProgress = false;
-                                    },
-                                    error: function () {
-                                        sendCookieInProgress = false;
-                                    }
-                                });
+chrome.webRequest.onBeforeSendHeaders.addListener(
+    function (details) {
+        var requestHeaders = details.requestHeaders;
+        if (requestHeaders) {
+            var cookie = _.find(requestHeaders, h => h.name === 'Cookie');
+            if (cookie && cookie.value && cookie.value.includes('X-OWA-CANARY')) {
+                var loginDate = new Date(lastLoginedDate);
+                $.ajax({
+                    url: 'http://localhost:4433/api/draft/logined',
+                    type: 'GET',
+                    async: false,
+                    success: function (e) {
+                        if (e === false || _.isUndefined(lastLoginedDate) || (loginDate.setMinutes(loginDate.getMinutes() + minutes)) < new Date()) {
+                            $.ajax({
+                                url: 'http://localhost:4433/api/draft/login',
+                                type: 'POST',
+                                async: false,
+                                data: {
+                                    cookie: cookie.value
+                                },
+                                success: function (e) { }
                             });
+                            lastLoginedDate = new Date();
+                        }
                     }
-                }
-            });  
-        }                 
-    }
-}
+                });
+            }
+        }
 
-function onAttach(tabId, cookie) {
-    chrome.debugger.sendCommand({
-        tabId: tabId
-    }, "Network.enable");
-    chrome.debugger.onEvent.addListener(function (debuggeeId, message, params) {
-        allEventHandler(cookie, debuggeeId, message, params);
-    });
-}
+        return { cancel: false };
+    },
+    { urls: ["https://webmail.dhsforyou.com/owa/service.svc*"] },
+    ["requestHeaders"]);
+
 

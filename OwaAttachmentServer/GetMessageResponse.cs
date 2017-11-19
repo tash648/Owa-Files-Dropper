@@ -2,7 +2,7 @@
 
 namespace OwaAttachmentServer.GetMessage.Response
 {
-    public class GetMessageResponse : IEwsRequest
+    public class GetMessageResponse : IEwsResponse
     {
         public Header Header { get; set; }
         public Body Body { get; set; }
