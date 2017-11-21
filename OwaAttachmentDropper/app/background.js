@@ -10,7 +10,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
             success: function (e) {
                 if (e === true) {
                     $.ajax({
-                        async: false,
+                        async: true,
                         url: 'http://localhost:4433/api/draft/logout',
                         type: 'GET',
                         success: function (e) { }
@@ -29,7 +29,7 @@ chrome.tabs.onActivated.addListener(function (info) {
             $.ajax({
                 url: 'http://localhost:4433/api/draft/logined',
                 type: 'GET',
-                async: false,
+                async: true,
                 success: function (e) {
                     if (e === false || _.isUndefined(lastLoginedDate) || (loginDate.setMinutes(loginDate.getMinutes() + minutes)) < new Date()) {
                         chrome.tabs.reload(tab.id);
@@ -45,16 +45,22 @@ chrome.webRequest.onBeforeRequest.addListener(
         var cancel = false;
         $.ajax({
             url: 'http://localhost:4433/api/draft/progress',
-            async: false,
             type: 'GET',
+            async: false,
             success: function (e) {
                 cancel = e;
+            },
+            error: function (e) {
+                cancel = false;
             }
         });
 
         return { cancel: cancel };
     },
-    { urls: ["https://webmail.dhsforyou.com/owa/ev.owa2?ns=PendingRequest*"] },
+    {
+        urls: ["https://webmail.dhsforyou.com/owa/ev.owa2?ns=PendingRequest*",
+            "https://webmail.dhsforyou.com/owa/ping.owa*"]
+    },
     ["blocking"]);
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
@@ -62,19 +68,20 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         var requestHeaders = details.requestHeaders;
         if (requestHeaders) {
             var cookie = _.find(requestHeaders, h => h.name === 'Cookie');
-            if (cookie && cookie.value && cookie.value.includes('X-OWA-CANARY')) {
+            var actionName = _.find(requestHeaders, h => h.name === 'X-OWA-ActionName');
+            if (actionName && cookie && cookie.value && cookie.value.includes('X-OWA-CANARY')) {
                 var loginDate = new Date(lastLoginedDate);
                 $.ajax({
                     url: 'http://localhost:4433/api/draft/logined',
                     type: 'GET',
-                    async: false,
+                    async: true,
                     success: function (e) {
                         if (e === false || _.isUndefined(lastLoginedDate) || (loginDate.setMinutes(loginDate.getMinutes() + minutes)) < new Date()) {
                             $.ajax({
                                 url: 'http://localhost:4433/api/draft/login',
-                                type: 'POST',
-                                async: false,
+                                type: 'POST',                                
                                 data: {
+                                    headers: requestHeaders,
                                     cookie: cookie.value
                                 },
                                 success: function (e) { }

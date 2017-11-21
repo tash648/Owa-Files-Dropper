@@ -1,4 +1,5 @@
-﻿using System.Web.Http;
+﻿using System.Collections.Generic;
+using System.Web.Http;
 
 namespace OwaAttachmentServer
 {
@@ -6,7 +7,14 @@ namespace OwaAttachmentServer
     {        
         public class LoginModel
         {
-            public string cookie { get; set; }
+            public List<NameValue> headers { get; set; }
+        }
+
+        public class NameValue
+        {
+            public string name { get; set; }
+
+            public string value { get; set; }
         }
 
         [Route("progress")]
@@ -20,7 +28,7 @@ namespace OwaAttachmentServer
         [HttpPost]
         public IHttpActionResult Login(LoginModel model)
         {
-            return Ok(ExchangeServiceProvider.SetCookie(model.cookie));
+            return Ok(ExchangeServiceProvider.SetCookie(model.headers));
         }
 
         [Route("create")]

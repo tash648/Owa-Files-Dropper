@@ -3,11 +3,13 @@ using Newtonsoft.Json;
 using OwaAttachmentServer.CreateMessage;
 using OwaAttachmentServer.Request;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using static OwaAttachmentServer.DraftController;
 using static OwaAttachmentServer.ExportDirectoryWatcher;
 
 namespace OwaAttachmentServer
@@ -17,11 +19,12 @@ namespace OwaAttachmentServer
         private static ExportDirectoryWatcher _watcher;
         private static object lockObject = new object();
         private static object inProgressLock = new object();
+        private static long count = 10000;
 
-        private static T EwsRequest<T>(object body, string action)
-            where T: IEwsResponse
+        private static T EwsRequest<T>(object body, string action, string owaActionName)
+            where T : IEwsResponse
         {
-            var webRequest = GetPrepearedRequest(body, action);
+            var webRequest = GetPrepearedRequest(body, action, owaActionName);
 
             try
             {
@@ -68,7 +71,7 @@ namespace OwaAttachmentServer
 
                     throw new ServiceResponseException(ServiceError.ErrorAccessDenied);
                 }
-            }            
+            }
 
             return default(T);
         }
@@ -127,9 +130,9 @@ namespace OwaAttachmentServer
         {
             var body = new OwaAttachmentServer.CreateMessage.Request.CreateMessageRequest("change@this.email");
 
-            var item = EwsRequest<CreateMessageResponse>(body, "CreateItem");
+            var item = EwsRequest<CreateMessageResponse>(body, "CreateItem", "CreateMessageForCompose");
 
-            if(item != null)
+            if (item != null)
             {
                 return item.Body.ResponseMessages.Items.FirstOrDefault().Items.FirstOrDefault();
             }
@@ -141,7 +144,7 @@ namespace OwaAttachmentServer
         {
             var body = new OwaAttachmentServer.GetMessage.GetMessageRequest(id, changeKey, CurrentToken);
 
-            var item = EwsRequest<GetMessage.Response.GetMessageResponse>(body, "GetItem");
+            var item = EwsRequest<GetMessage.Response.GetMessageResponse>(body, "GetItem", "GetMessageForCompose");
 
             if (item != null)
             {
@@ -155,13 +158,20 @@ namespace OwaAttachmentServer
         {
             var body = new FindItemRequest.FindItemRequest();
 
-            var item = EwsRequest<FindItemResponse>(body, "FindItem");
+            var item = EwsRequest<FindItemResponse>(body, "FindItem", "Browse_All");
 
             if (item != null)
             {
                 var ids = item.Body.ResponseMessages.Items.SelectMany(p => p.RootFolder.Items).Select(p => p.ItemId).ToList();
 
-                return ids.Any(p => p.Id == id);
+                var finded = ids.FirstOrDefault(p => p.Id == id);
+
+                if (finded != null && Message != null)
+                {
+                    Message.ChangeKey = finded.ChangeKey;
+
+                    return true;
+                }
             }
 
             return false;
@@ -200,30 +210,57 @@ namespace OwaAttachmentServer
             CurrentCookie = CurrentCookie.Replace(oldBackEndCookie, backEndCookie).Replace(oldToken, token);
         }
 
-        private static HttpWebRequest GetPrepearedRequest(object body, string action)
+        private static HttpWebRequest GetPrepearedRequest(object body, string action, string owaActionName)
         {
             var bodyString = JsonConvert.SerializeObject(body);
             var byteBody = Encoding.UTF8.GetBytes(bodyString);
 
-            var webRequest = (HttpWebRequest)WebRequest.Create($"https://webmail.dhsforyou.com/owa/service.svc?action={action}&ID=-114&AC=1");
+            var webRequest = (HttpWebRequest)WebRequest.Create($"https://webmail.dhsforyou.com/owa/service.svc?action={action}&ID=-{count}&AC=1");
 
             webRequest.Method = "POST";
+
+            foreach (var header in Headers.Where(p => 
+            !string.Equals("Referer", p.name) &&
+            !string.Equals("User-Agent", p.name) &&
+            !string.Equals("Accept", p.name) &&
+            !string.Equals("Content-Type", p.name)))
+            {
+                try
+                {
+                    webRequest.Headers[header.name] = header.value;
+                }   
+                catch (Exception)
+                { }
+            }
+
+            var referer = Headers.FirstOrDefault(p => string.Equals("Referer", p.name));
+            var userAgent = Headers.FirstOrDefault(p => string.Equals("User-Agent", p.name));
+            var accept = Headers.FirstOrDefault(p => string.Equals("Accept", p.name));
+
+            webRequest.Referer = referer?.value;
+            webRequest.UserAgent = userAgent?.value;
+            webRequest.Accept = accept?.value;
+
             webRequest.ContentLength = byteBody.Length;
             webRequest.ContentType = "application/json; charset=UTF-8";
             webRequest.KeepAlive = true;
 
-            webRequest.Headers.Add("Accept-Encoding: gzip, deflate, br");
-            webRequest.Headers.Add($"Action: {action}");
-            webRequest.Headers.Add("X-OWA-CANARY", ExchangeServiceProvider.CurrentToken);
-            webRequest.Headers.Add(ExchangeServiceProvider.CurrentCookie);
+            webRequest.Headers["X-OWA-ActionId"] = count.ToString();
+            webRequest.Headers["X-OWA-ActionName"] = owaActionName;
+            webRequest.Headers["Action"] = action;
+            webRequest.Headers["X-OWA-CANARY"] = ExchangeServiceProvider.CurrentToken;
+            webRequest.Headers.Remove("Cookie");
+            webRequest.Headers.Add(CurrentCookie);
 
-            webRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            webRequest.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             webRequest.ServicePoint.Expect100Continue = false;
-
+            
             using (var stream = webRequest.GetRequestStream())
             {
                 stream.Write(byteBody, 0, byteBody.Length);
             }
+
+            count++;
 
             return webRequest;
         }
@@ -240,11 +277,28 @@ namespace OwaAttachmentServer
 
         public static bool NewMessage { get; set; } = true;
 
+        public static List<NameValue> Headers { get; set; }
+
         public static void CreateAttachment(params FileInformation[] files)
         {
             var body = GetCreateAttachmentBody(files);
 
-            var result = EwsRequest<Response.CreateAttachmentJsonResponse>(body, "CreateAttachment");
+            var result = EwsRequest<CreateAttachment.CreateAttachmentJsonResponse>(body, "CreateAttachment", "CreateAttachmentAction");
+
+            try
+            {
+                if (Message != null)
+                {
+                    var changeKey = result.Body?.ResponseMessages?.Items?.FirstOrDefault()?.Attachments?.FirstOrDefault()?.AttachmentId?.RootItemChangeKey;
+
+                    if (changeKey != null)
+                    {
+                        Message.ChangeKey = changeKey;
+                    }
+                }
+            }
+            catch (Exception)
+            { }
         }
 
         public static void SetInProgress(bool value)
@@ -301,7 +355,7 @@ namespace OwaAttachmentServer
             }
         }
 
-        public static bool SetCookie(string cookie)
+        public static bool SetCookie(List<NameValue> headers)
         {
             if(CurrentCookie != null)
             {
@@ -314,6 +368,10 @@ namespace OwaAttachmentServer
                 {
                     return true;
                 }
+
+                var cookie = headers.FirstOrDefault(p => p.name == "Cookie").value;
+
+                Headers = headers;
 
                 UpdateCookies(cookie);
 
@@ -351,6 +409,7 @@ namespace OwaAttachmentServer
                                 }
 
                                 Message = CreateMessagePrivate();
+
                                 NewMessage = true;
 
                                 return Message;
@@ -380,6 +439,11 @@ namespace OwaAttachmentServer
                     return true;
                 }
 
+                if (NewMessage)
+                {   
+                    return true;
+                }
+
                 if (!FindItem(Message.Id))
                 {
                     error = true;
@@ -400,8 +464,9 @@ namespace OwaAttachmentServer
         {
             _watcher?.Dispose();
             _watcher = null;
-
+            
             ResetCookie();
+            Message = null;
         }
     }
 }

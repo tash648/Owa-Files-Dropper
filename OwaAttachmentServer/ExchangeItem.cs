@@ -21,6 +21,7 @@ namespace OwaAttachmentServer
         public string ChangeKey
         {
             get { return ItemId.ChangeKey; }
+            set { ItemId.ChangeKey = value; }
         }
     }
 

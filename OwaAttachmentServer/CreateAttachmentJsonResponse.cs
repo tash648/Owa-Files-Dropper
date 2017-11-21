@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OwaAttachmentServer.Response
+namespace OwaAttachmentServer.CreateAttachment
 {
     public class CreateAttachmentJsonResponse : IEwsResponse
     {
-        public ResponseHeader Header { get; set; }
-        public ResponseBody Body { get; set; }
-        
+        public Header Header { get; set; }
+        public Body Body { get; set; }
+
 
         public string GetErrorCode()
         {
@@ -20,7 +20,7 @@ namespace OwaAttachmentServer.Response
             {
                 var responseItem = responseItems.FirstOrDefault(p => p.ResponseClass == "Error");
 
-                if(responseItem != null)
+                if (responseItem != null)
                 {
                     return responseItem.ResponseCode;
                 }
@@ -30,7 +30,14 @@ namespace OwaAttachmentServer.Response
         }
     }
 
-    public class ResponseHeader
+
+    public class Rootobject
+    {
+        public Header Header { get; set; }
+        public Body Body { get; set; }
+    }
+
+    public class Header
     {
         public Serverversioninfo ServerVersionInfo { get; set; }
     }
@@ -44,23 +51,34 @@ namespace OwaAttachmentServer.Response
         public string Version { get; set; }
     }
 
-    public class ResponseBody
+    public class Body
     {
-        public ResponseMessages ResponseMessages { get; set; }
+        public Responsemessages ResponseMessages { get; set; }
     }
 
-    public class ResponseMessages
+    public class Responsemessages
     {
-        public ResponseItem[] Items { get; set; }
+        public Item[] Items { get; set; }
     }
 
-    public class ResponseItem
+    public class Item
     {
         public string __type { get; set; }
-        public string MessageText { get; set; }
         public string ResponseCode { get; set; }
         public string ResponseClass { get; set; }
-        public object[] Attachments { get; set; }
+        public Attachment[] Attachments { get; set; }
     }
 
+    public class Attachment
+    {
+        public string __type { get; set; }
+        public Attachmentid AttachmentId { get; set; }
+    }
+
+    public class Attachmentid
+    {
+        public string RootItemChangeKey { get; set; }
+        public string RootItemId { get; set; }
+        public string Id { get; set; }
+    }    
 }

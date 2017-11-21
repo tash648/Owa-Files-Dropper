@@ -201,7 +201,11 @@ namespace OwaAttachmentServer
                 if (files == null || files.Count == 0)
                 {
                     return;
-                }                
+                }
+
+                semaphore.WaitOne();
+
+                ExchangeServiceProvider.SetInProgress(true);
 
                 if (ExchangeServiceProvider.Message == null)
                 {
@@ -219,13 +223,13 @@ namespace OwaAttachmentServer
                             { }
                         });
 
+                        semaphore.Release();
+
+                        ExchangeServiceProvider.SetInProgress(false);
+
                         return;
                     }
                 }
-
-                semaphore.WaitOne();
-
-                ExchangeServiceProvider.SetInProgress(true);
 
                 var attachmentsSize = files.Sum(p => p.Content.Length);
 
@@ -261,21 +265,33 @@ namespace OwaAttachmentServer
 
                                     var tempFiles = files.ToList();
 
-                                    tempFiles.ForEach(file =>
-                                    {
-                                        ExchangeServiceProvider.CreateAttachment(file);
 
-                                        files.Remove(file);
+                                    for(var i = 0; i < tempFiles.Count; i++)
+                                    {
+                                        var file = tempFiles[i];
 
                                         try
                                         {
-                                            File.Delete(file.TempPath);
+                                            ExchangeServiceProvider.CreateAttachment(file);
+
+                                            files.Remove(file);
+
+                                            try
+                                            {
+                                                File.Delete(file.TempPath);
+                                            }
+                                            catch (Exception)
+                                            { }
                                         }
                                         catch (Exception)
-                                        { }
-                                    });
+                                        {
+                                            break;
+                                        }
+                                    }
 
-                                    attached = true;
+                                    attached = !files.Any();
+
+                                    ExchangeServiceProvider.NewMessage = false;
                                 }
                                 catch (ServiceResponseException ex)
                                 {
@@ -286,7 +302,6 @@ namespace OwaAttachmentServer
                                 }
                             }
                         }
-
                         catch (Exception ex)
                         { }
                     }
