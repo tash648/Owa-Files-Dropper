@@ -20,6 +20,7 @@ namespace OwaAttachmentServer
         private static object lockObject = new object();
         private static object inProgressLock = new object();
         private static long count = 10000;
+        private static DateTime? expired;
 
         private static T EwsRequest<T>(object body, string action, string owaActionName)
             where T : IEwsResponse
@@ -67,7 +68,12 @@ namespace OwaAttachmentServer
             {
                 if (ex.Response != null)
                 {
-                    ResetCookie();
+                    try
+                    {
+                        Logout();
+                    }
+                    catch (Exception)
+                    {}
 
                     throw new ServiceResponseException(ServiceError.ErrorAccessDenied);
                 }
@@ -219,7 +225,7 @@ namespace OwaAttachmentServer
 
             webRequest.Method = "POST";
 
-            foreach (var header in Headers.Where(p => 
+            foreach (var header in Headers.Where(p =>
             !string.Equals("Referer", p.name) &&
             !string.Equals("User-Agent", p.name) &&
             !string.Equals("Accept", p.name) &&
@@ -228,7 +234,7 @@ namespace OwaAttachmentServer
                 try
                 {
                     webRequest.Headers[header.name] = header.value;
-                }   
+                }
                 catch (Exception)
                 { }
             }
@@ -254,7 +260,7 @@ namespace OwaAttachmentServer
 
             webRequest.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             webRequest.ServicePoint.Expect100Continue = false;
-            
+
             using (var stream = webRequest.GetRequestStream())
             {
                 stream.Write(byteBody, 0, byteBody.Length);
@@ -303,14 +309,14 @@ namespace OwaAttachmentServer
 
         public static void SetInProgress(bool value)
         {
-            if(InProgress == value)
+            if (InProgress == value)
             {
                 return;
             }
 
             lock (inProgressLock)
             {
-                if(InProgress == value)
+                if (InProgress == value)
                 {
                     return;
                 }
@@ -337,14 +343,14 @@ namespace OwaAttachmentServer
 
         public static bool ResetCookie()
         {
-            if(CurrentCookie == null)
+            if (CurrentCookie == null)
             {
                 return true;
             }
 
             lock (lockObject)
             {
-                if(CurrentCookie == null)
+                if (CurrentCookie == null)
                 {
                     return true;
                 }
@@ -356,31 +362,35 @@ namespace OwaAttachmentServer
         }
 
         public static bool SetCookie(List<NameValue> headers)
-        {
-            if(CurrentCookie != null)
+        {           
+            if (CurrentCookie != null && expired != null && expired.Value > DateTime.Now)
             {
                 return true;
             }
 
             lock (lockObject)
             {
-                if(CurrentCookie != null)
+                if(CurrentCookie != null && expired != null && expired.Value > DateTime.Now)
                 {
                     return true;
                 }
 
                 var cookie = headers.FirstOrDefault(p => p.name == "Cookie").value;
 
-                Headers = headers;
+                Headers = headers;                
 
                 UpdateCookies(cookie);
+
+                expired = DateTime.Now.AddMinutes(25);
 
                 var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
                 var exportPath = appSettings.Settings["ExportFolder"].Value;
 
-                _watcher = new ExportDirectoryWatcher(exportPath);
-
-                _watcher.Run();
+                if (_watcher == null)
+                {
+                    _watcher = new ExportDirectoryWatcher(exportPath);
+                    _watcher.Run();
+                }                
 
                 return true; 
             }
