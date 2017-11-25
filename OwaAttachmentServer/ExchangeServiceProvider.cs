@@ -472,7 +472,8 @@ namespace OwaAttachmentServer
                 }
 
                 if (NewMessage)
-                {   
+                {
+                    emailMessage = Message;
                     return true;
                 }
 
