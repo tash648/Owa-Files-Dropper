@@ -55,6 +55,8 @@ namespace OwaAttachmentServer
             tempFilesWatcher.Created += TempFilesWatcher_Created;
         }
 
+        public bool Shutdown { get; set; }
+
         private void StartDirectoryWatch()
         {
             timer = new System.Threading.Timer(o =>
@@ -197,7 +199,7 @@ namespace OwaAttachmentServer
         private void ExportFilesOnCreated(List<FileInformation> files)
         {
             try
-            {
+            {                
                 if (files == null || files.Count == 0)
                 {
                     return;
@@ -239,8 +241,6 @@ namespace OwaAttachmentServer
 
                     ExchangeItem message = null;
 
-                    var filesForDelete = files.ToList();
-
                     while (!attached)
                     {
                         try
@@ -265,28 +265,20 @@ namespace OwaAttachmentServer
 
                                     var tempFiles = files.ToList();
 
-
                                     for(var i = 0; i < tempFiles.Count; i++)
                                     {
                                         var file = tempFiles[i];
 
+                                        ExchangeServiceProvider.CreateAttachment(file);
+
+                                        files.Remove(file);
+
                                         try
                                         {
-                                            ExchangeServiceProvider.CreateAttachment(file);
-
-                                            files.Remove(file);
-
-                                            try
-                                            {
-                                                File.Delete(file.TempPath);
-                                            }
-                                            catch (Exception)
-                                            { }
+                                            File.Delete(file.TempPath);
                                         }
                                         catch (Exception)
-                                        {
-                                            break;
-                                        }
+                                        { }
                                     }
 
                                     attached = !files.Any();
@@ -308,7 +300,10 @@ namespace OwaAttachmentServer
 
                     ExchangeServiceProvider.SetInProgress(false);
 
-                    semaphore.Release();
+                    if (!semaphore.SafeWaitHandle.IsClosed)
+                    {
+                        semaphore.Release();
+                    }                    
                 });
             }
             catch (Exception ex)

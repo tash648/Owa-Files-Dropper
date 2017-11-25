@@ -72,7 +72,7 @@ namespace OwaAttachmentServer
                     {
                         Logout();
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {}
 
                     throw new ServiceResponseException(ServiceError.ErrorAccessDenied);
@@ -186,12 +186,15 @@ namespace OwaAttachmentServer
         private static void UpdateCookies(string cookie)
         {
             if (string.IsNullOrEmpty(cookie))
-                return;
+                return;           
 
             var canaryIndex = cookie.IndexOf("X-OWA-CANARY=");
-            var backEndIndex = cookie.IndexOf("X-BackEndCookie=");
 
-            var backEndCookie = cookie.Substring(backEndIndex + 16, 134);
+            if(canaryIndex == -1)
+            {
+                return;
+            }
+
             var token = cookie.Substring(canaryIndex + 13, 76);
 
             CurrentToken = token;
@@ -200,20 +203,28 @@ namespace OwaAttachmentServer
 
         private static void RefresTokens(string cookie)
         {
+            if (string.IsNullOrEmpty(cookie))
+            {
+                return;
+            }
+
             var canaryIndex = cookie.IndexOf("X-OWA-CANARY=");
             var backEndIndex = cookie.IndexOf("X-BackEndCookie=");
 
             var backEndCookie = cookie.Substring(backEndIndex, 134 + 16);
             var token = cookie.Substring(canaryIndex, 76 + 13);
 
-            var oldCanaryIndex = CurrentCookie.IndexOf("X-OWA-CANARY=");
-            var oldBackEndIndex = CurrentCookie.IndexOf("X-BackEndCookie=");
+            if(!string.IsNullOrEmpty(CurrentCookie))
+            {
+                var oldCanaryIndex = CurrentCookie.IndexOf("X-OWA-CANARY=");
+                var oldBackEndIndex = CurrentCookie.IndexOf("X-BackEndCookie=");
 
-            var oldBackEndCookie = CurrentCookie.Substring(oldBackEndIndex, 134 + 16);
-            var oldToken = CurrentCookie.Substring(oldCanaryIndex, 76 + 13);
+                var oldBackEndCookie = CurrentCookie.Substring(oldBackEndIndex, 134 + 16);
+                var oldToken = CurrentCookie.Substring(oldCanaryIndex, 76 + 13);
 
-            CurrentToken = new string(token.Skip(13).ToArray());
-            CurrentCookie = CurrentCookie.Replace(oldBackEndCookie, backEndCookie).Replace(oldToken, token);
+                CurrentToken = new string(token.Skip(13).ToArray());
+                CurrentCookie = CurrentCookie.Replace(oldBackEndCookie, backEndCookie).Replace(oldToken, token);
+            }            
         }
 
         private static HttpWebRequest GetPrepearedRequest(object body, string action, string owaActionName)
@@ -256,7 +267,11 @@ namespace OwaAttachmentServer
             webRequest.Headers["Action"] = action;
             webRequest.Headers["X-OWA-CANARY"] = ExchangeServiceProvider.CurrentToken;
             webRequest.Headers.Remove("Cookie");
-            webRequest.Headers.Add(CurrentCookie);
+
+            if (!string.IsNullOrEmpty(CurrentCookie))
+            {
+                webRequest.Headers.Add(CurrentCookie);
+            }            
 
             webRequest.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             webRequest.ServicePoint.Expect100Continue = false;
@@ -282,7 +297,7 @@ namespace OwaAttachmentServer
         public static bool InProgress { get; set; }
 
         public static bool NewMessage { get; set; } = true;
-
+       
         public static List<NameValue> Headers { get; set; }
 
         public static void CreateAttachment(params FileInformation[] files)
@@ -370,29 +385,36 @@ namespace OwaAttachmentServer
 
             lock (lockObject)
             {
-                if(CurrentCookie != null && expired != null && expired.Value > DateTime.Now)
+                try
                 {
+                    if (CurrentCookie != null && expired != null && expired.Value > DateTime.Now)
+                    {
+                        return true;
+                    }
+
+                    var cookie = headers.FirstOrDefault(p => p.name == "Cookie").value;
+
+                    Headers = headers;
+
+                    UpdateCookies(cookie);
+
+                    expired = DateTime.Now.AddMinutes(25);
+
+                    var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
+                    var exportPath = appSettings.Settings["ExportFolder"].Value;
+
+                    if (_watcher == null)
+                    {
+                        _watcher = new ExportDirectoryWatcher(exportPath);
+                        _watcher.Run();
+                    }
+
                     return true;
                 }
-
-                var cookie = headers.FirstOrDefault(p => p.name == "Cookie").value;
-
-                Headers = headers;                
-
-                UpdateCookies(cookie);
-
-                expired = DateTime.Now.AddMinutes(25);
-
-                var appSettings = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetEntryAssembly().Location).AppSettings;
-                var exportPath = appSettings.Settings["ExportFolder"].Value;
-
-                if (_watcher == null)
+                catch (Exception ex)
                 {
-                    _watcher = new ExportDirectoryWatcher(exportPath);
-                    _watcher.Run();
-                }                
-
-                return true; 
+                    return false;
+                }
             }
         }
 
@@ -472,11 +494,15 @@ namespace OwaAttachmentServer
 
         public static void Logout()
         {
-            _watcher?.Dispose();
-            _watcher = null;
-            
-            ResetCookie();
-            Message = null;
+            try
+            {
+                _watcher?.Dispose();
+                _watcher = null;
+
+                ResetCookie();
+            }
+            catch (Exception ex)
+            { }
         }
     }
 }
