@@ -134,7 +134,7 @@ namespace OwaAttachmentServer
 
         private static ExchangeItem CreateMessagePrivate()
         {
-            var body = new OwaAttachmentServer.CreateMessage.Request.CreateMessageRequest("change@this.email");
+            var body = new OwaAttachmentServer.CreateMessage.Request.CreateMessageRequest(string.Empty);
 
             var item = EwsRequest<CreateMessageResponse>(body, "CreateItem", "CreateMessageForCompose");
 
@@ -299,6 +299,18 @@ namespace OwaAttachmentServer
         public static bool NewMessage { get; set; } = true;
        
         public static List<NameValue> Headers { get; set; }
+
+        public static void ConnectionTest()
+        {
+            try
+            {
+                var body = new FindItemRequest.FindItemRequest();
+
+                var item = EwsRequest<FindItemResponse>(body, "FindItem", "Browse_All");
+            }
+            catch (Exception)
+            { }
+        }
 
         public static void CreateAttachment(params FileInformation[] files)
         {

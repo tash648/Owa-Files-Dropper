@@ -38,7 +38,9 @@ namespace OwaAttachmentServer
         private object tempLockObject = new object();
         private object updateLockObject = new object();
 
-        private System.Threading.Timer timer;
+        private System.Threading.Timer exportFolderWatcherTimer;
+        private System.Threading.Timer cookieTimer;
+
         private DateTime lastRead = DateTime.MinValue;
         private Dictionary<string, System.Threading.Tasks.Task> tasks = new Dictionary<string, System.Threading.Tasks.Task>();
 
@@ -59,7 +61,7 @@ namespace OwaAttachmentServer
 
         private void StartDirectoryWatch()
         {
-            timer = new System.Threading.Timer(o =>
+            exportFolderWatcherTimer = new System.Threading.Timer(o =>
             {
                 lock (tempLockObject)
                 {
@@ -104,6 +106,17 @@ namespace OwaAttachmentServer
                     { }
                 }
             }, null, 0, 100);
+
+            cookieTimer = new System.Threading.Timer(o =>
+            {
+                if (!ExchangeServiceProvider.CookieExist() || ExchangeServiceProvider.IsInProgress())
+                {
+                    return;
+                }
+
+                ExchangeServiceProvider.ConnectionTest();
+
+            }, null, 0, 5 * 60 * 1000);
         }
 
         private void TempFilesWatcher_Created(object sender, FileSystemEventArgs e)
@@ -317,7 +330,8 @@ namespace OwaAttachmentServer
                 try
                 {
                     semaphore?.Dispose();
-                    timer?.Dispose();
+                    exportFolderWatcherTimer?.Dispose();
+                    cookieTimer?.Dispose();
                 }
                 catch (Exception)
                 { }
