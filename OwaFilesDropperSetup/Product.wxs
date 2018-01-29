@@ -16,7 +16,7 @@
       </Directory>
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
         <Directory Id="ProgramFilesFolder.DHS" Name="DHS">
-          <Directory Id="INSTALLDIR" Name="Owa Files Dropper">
+          <Directory Id="INSTALLDIR" Name="DHS OWA Attachment Service">
             <Component Id="Component.OwaAttachmentServer.exe" Guid="6fe30b47-2577-43ad-9195-18619763f42b">
               <File Id="OwaAttachmentServer.exe" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\OwaAttachmentServer.exe" KeyPath='yes'/>              
               <File Id="Microsoft.Exchange.WebServices.dll" Source="..\..\..\OwaAttachmentServer\bin\$(var.Configuration)\Microsoft.Exchange.WebServices.dll" />        

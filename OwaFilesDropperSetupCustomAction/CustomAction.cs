@@ -108,7 +108,14 @@ namespace OwaFilesDropperSetupCA
                     File.WriteAllText(configPath, configString);
                 }
 
-                Process.Start("chrome.exe", "https://chrome.google.com/webstore/detail/owa-files-dropper/bhahbhcbkoapdhemlffafjiglbigdodl");
+                try
+                {                    
+                    Process.Start("chrome.exe", "https://chrome.google.com/webstore/detail/owa-files-dropper/bhahbhcbkoapdhemlffafjiglbigdodl");
+                }
+                catch (Exception)
+                {
+                    Process.Start("iexplore.exe", "https://chrome.google.com/webstore/detail/owa-files-dropper/bhahbhcbkoapdhemlffafjiglbigdodl");
+                }
 
                 return ActionResult.Success;
             }
